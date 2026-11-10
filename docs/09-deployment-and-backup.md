@@ -90,6 +90,7 @@ sudo -u workforceiq npm start
 | `SESSION_TTL_HOURS` | 12 | Session length |
 | `MAX_UPLOAD_MB` | 20 | Upload size cap |
 | `TRUST_PROXY` | false | Set `true` behind a reverse proxy so client IPs are recorded correctly |
+| `PUBLIC_HOST` | empty | Comma-separated public hostnames (for example `workforce.example.com`). The cross-site request check accepts an `Origin` matching one of these. Required whenever a proxy forwards neither `X-Forwarded-Host` nor the browser's `Sec-Fetch-Site` header (some tunnels and older proxies do not). Set it to the exact host users type into the address bar. |
 | `AI_PROVIDER` | `local` | `local` (default) or an OpenAI-compatible provider name |
 | `AI_MODEL`, `AI_BASE_URL`, `AI_API_KEY` | empty | Only needed if you deliberately enable an external model |
 | `AI_ALLOW_EMPLOYEE_NAMES` | false | Sends names to an external model — off unless a customer explicitly accepts it |
@@ -400,6 +401,7 @@ Suggested external uptime check: HTTP GET `/api/health`, expecting 200, every 5 
 | Forecast refused | Fewer than 4 months of complete history | Expected behaviour — see the AI governance document |
 | `better-sqlite3` fails to install | No compiler on the host | `apt-get install -y build-essential python3` then reinstall |
 | Sign-in works but the screen is blank | `dist/` not built or stale | `npm run build` and restart |
+| **Sign-in returns `403 CROSS_SITE_BLOCKED`** | The public host the browser used is not visible to the API: an unset `PUBLIC_HOST`, a proxy that strips `X-Forwarded-Host`, or a client that sends neither `Sec-Fetch-Site` nor a matching `Origin` | Set `PUBLIC_HOST=<the exact public hostname>` in `.env` and restart. Verify with `curl -H "Origin: https://<host>" -X POST .../api/auth/login`. This is a configuration error, not a credential problem — the audit trail will show no login attempt at all. |
 
 ---
 

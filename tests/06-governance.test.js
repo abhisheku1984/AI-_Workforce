@@ -192,6 +192,48 @@ test('Automation, approvals, reports and operations', async (t) => {
     record('Security', 'Cross-origin state-changing request rejected', true);
   });
 
+  await t.test('cross-site protection still blocks a genuinely foreign origin', async () => {
+    // A cross-site page always sends Origin, and cannot forge Sec-Fetch-Site.
+    for (const headers of [
+      { origin: 'https://evil.example' },
+      { origin: 'https://evil.example', 'x-forwarded-host': 'workforce.example.com' },
+    ]) {
+      const res = await fetch(`${baseUrl}/api/workforce`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', cookie: admin.cookie, ...headers },
+        body: JSON.stringify({ employee_code: 'X', full_name: 'Y' }),
+      });
+      assert.equal(res.status, 403, `origin ${headers.origin} should be blocked`);
+    }
+    record('Security', 'Foreign origin still rejected after proxy-safe comparison', true);
+  });
+
+  await t.test('a request behind a reverse proxy is not mistaken for a cross-site request', async () => {
+    // Browsers send Sec-Fetch-Site: same-origin; proxies rewrite Host. Both must work.
+    const viaFetchMetadata = await fetch(`${baseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        origin: 'https://workforce.example.com',
+        'sec-fetch-site': 'same-origin',
+      },
+      body: JSON.stringify({ email: 'admin@alpha.test', password: 'DemoPass!2026' }),
+    });
+    assert.equal(viaFetchMetadata.status, 200, 'Sec-Fetch-Site same-origin must be accepted');
+
+    const viaForwardedHost = await fetch(`${baseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        origin: 'https://workforce.example.com',
+        'x-forwarded-host': 'workforce.example.com',
+      },
+      body: JSON.stringify({ email: 'admin@alpha.test', password: 'DemoPass!2026' }),
+    });
+    assert.equal(viaForwardedHost.status, 200, 'X-Forwarded-Host must be honoured');
+    record('Security', 'Sign-in works behind a reverse proxy or preview tunnel', true);
+  });
+
   await t.test('no secrets are committed to the repository', async () => {
     const files = [
       'server/config.js', 'server/index.js', 'server/auth/session.js', 'server/auth/passwords.js',

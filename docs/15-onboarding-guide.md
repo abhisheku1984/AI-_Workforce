@@ -226,6 +226,7 @@ Both kinds of correction are recorded separately in `docs/14-change-history.md` 
 | Taking `org_id` from `req.body` | Cross-tenant leak (a failing tenancy test) | Use `req.orgId` |
 | Returning 403 for a foreign record | Ids can be probed | Return 404 |
 | Reading `process.env` in a React page | Value is `undefined` in the browser | Expose it from the API |
+| Testing the API only on `localhost` | Sign-in works locally but fails behind a proxy or tunnel with `CROSS_SITE_BLOCKED` | Test through the same proxy the user will use; check `Sec-Fetch-Site`/`X-Forwarded-Host` handling in `server/index.js` |
 | Forgetting `--test-concurrency=1` | Intermittent port or file conflicts | Pass the flag |
 | Editing an applied migration | Existing databases diverge | Add a new migration |
 | Changing a formula without changing its definition text | The product misdescribes itself | Update both, plus the test |

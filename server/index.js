@@ -52,19 +52,55 @@ function authRateLimit(req, res, next) {
 
 app.use('/api', authenticate);
 
-// Block cross-site state-changing requests (defence in depth on top of SameSite cookies).
+/**
+ * Block cross-site state-changing requests (defence in depth on top of SameSite cookies).
+ *
+ * Comparing Origin only against the Host header is too strict: behind a reverse proxy or
+ * a preview tunnel, the browser sends Origin = the public host while the proxy forwards
+ * Host = the upstream address (or an X-Forwarded-Host). That mismatch used to reject
+ * legitimate sign-ins before authentication even ran.
+ *
+ * The check therefore accepts a request when ANY of these hold:
+ *   1. the browser states Sec-Fetch-Site: same-origin (browsers set this; a cross-site
+ *      page cannot forge it);
+ *   2. the Origin host matches Host, X-Forwarded-Host, or an explicitly configured
+ *      PUBLIC_HOST allow-list;
+ *   3. there is no Origin header at all (non-browser client — the session cookie still
+ *      has to be valid, and a cross-site page always sends Origin).
+ * Anything else is refused. The protection is unchanged for a genuinely cross-site page.
+ */
+const PUBLIC_HOSTS = new Set(
+  String(process.env.PUBLIC_HOST || '')
+    .split(',')
+    .map((h) => h.trim().toLowerCase())
+    .filter(Boolean)
+);
+
 app.use('/api', (req, res, next) => {
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+  if (String(req.headers['sec-fetch-site'] || '').toLowerCase() === 'same-origin') return next();
+
   const origin = req.headers.origin;
   if (!origin) return next();
+
+  let originHost;
   try {
-    const host = new URL(origin).host;
-    const selfHost = req.headers.host;
-    if (host !== selfHost) {
-      return sendError(res, 403, 'CROSS_SITE_BLOCKED', 'Cross-site requests are not permitted.');
+    originHost = new URL(origin).host.toLowerCase();
+  } catch {
+    return next(); // malformed origin — cookie auth still applies
+  }
+
+  const candidates = new Set(PUBLIC_HOSTS);
+  for (const header of [req.headers.host, req.headers['x-forwarded-host']]) {
+    if (!header) continue;
+    for (const part of String(header).split(',')) {
+      const value = part.trim().toLowerCase();
+      if (value) candidates.add(value);
     }
-  } catch { /* malformed origin — allow, cookie auth still applies */ }
-  return next();
+  }
+
+  if (candidates.has(originHost)) return next();
+  return sendError(res, 403, 'CROSS_SITE_BLOCKED', 'Cross-site requests are not permitted.');
 });
 
 app.get('/api/health', (_req, res) => {

@@ -81,7 +81,7 @@ npm test                     # six suites
 npm run test:report          # rerun everything and regenerate docs/test-report.md
 ```
 
-Current state: **6 suites, 93 test cases, 94 recorded behaviours, 0 failures**, against a real Express app and a real database. Details, including what the tests do not cover, are in [`docs/test-report.md`](docs/test-report.md).
+Current state: **6 suites, 95 test cases, 96 recorded behaviours, 0 failures**, against a real Express app and a real database. Details, including what the tests do not cover, are in [`docs/test-report.md`](docs/test-report.md).
 
 ---
 

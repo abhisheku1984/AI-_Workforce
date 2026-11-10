@@ -30,7 +30,7 @@ This is the release record. It lists what was built in this release, and every d
 
 | Item | Result |
 | --- | --- |
-| Automated suites | 6 suites, 93 test cases, 94 recorded behaviours, **0 failures** |
+| Automated suites | 6 suites, 95 test cases, 96 recorded behaviours, **0 failures** |
 | Production build | Succeeds (Vite build, main bundle ~647 kB, ~192 kB gzipped) |
 | Served SPA | Root, hashed asset and a deep route all verified as served |
 | API walk-through | Health, sign-in, principal, dashboard, assistant, forecast, insights, reports exercised against the seeded demonstration database |
@@ -58,6 +58,8 @@ Each of these was found by running the product, not by reading it. They are list
 | 13 | Approval requests invisible in the main audit trail | An automation paused for approval, but an auditor scanning `audit_events` saw nothing | Every paused run now writes `approval.requested` as well as its run record | Governance records belong where the auditor looks, not only where the code finds them convenient |
 | 14 | Assistant response omitted the "did data leave?" field | The documented `external_calls_made` flag was tested on the fact-preview endpoint but missing from the answer payload itself | Both the answer and the blocked-request response now report `external_calls_made` and `mode` | If a privacy claim is made in documentation, the field backing it must exist where users look |
 | 15 | Import commit result lacked created-row detail | The commit response could not say which rows were created | `created_detail[]` added to the result | A result that only counts is hard to audit |
+| 16 | **CSRF guard rejected legitimate sign-in behind a reverse proxy or preview tunnel** | The guard compared the request's `Origin` only against the `Host` header. When a proxy forwards `Host` as the upstream address while the browser sends the public host as `Origin`, every state-changing request — sign-in included — returned `403 CROSS_SITE_BLOCKED` before authentication ran. The user saw only "Cross-site requests are not permitted", and the audit trail recorded nothing because the request never reached the login handler. | The comparison now accepts a request when the browser states `Sec-Fetch-Site: same-origin`, or when `Origin` matches `Host`, `X-Forwarded-Host`, or a configured `PUBLIC_HOST` allow-list. A genuinely foreign `Origin` is still refused, and a request carrying neither signal is still refused. Two tests pin both halves. | A security control written without the deployment topology in view can lock out every legitimate user while looking perfectly strict. When a user says "I cannot log in", check what the audit trail does *not* say. |
+| 17 | **Development server proxy broke its own host check** | `changeOrigin` was `false`, so the Vite dev server forwarded the browser's tunnel host to the API; Vite's host check then treated the hop as cross-origin and sign-in failed under `npm run dev` at any non-localhost host. | `changeOrigin: true` with `xfwd` and an explicit `X-Forwarded-Host`, which also feeds the API's proxy-aware CSRF check. | Reverse-proxy configuration is part of the product, not an environment detail. |
 
 ### 4. Corrections to test expectations (not product defects)
 
@@ -99,7 +101,7 @@ These appear in `docs/13-roadmap.md` with the evidence that would justify each o
 npm ci                       # install
 npm run build                # compile the interface
 npm start                    # run the product (needs SESSION_SECRET in production mode)
-npm test                     # six suites, 93 cases
+npm test                     # six suites, 95 cases
 npm run test:report          # regenerate docs/test-report.md from a real run
 npm run seed                 # create the demonstration tenants (development only)
 ```

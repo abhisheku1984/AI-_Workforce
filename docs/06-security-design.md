@@ -149,7 +149,7 @@ Three independent layers (§6 of the architecture document): session-derived ten
 | Security headers | `helmet` defaults: `X-Content-Type-Options`, `X-Frame-Options`/frame-ancestors, `Referrer-Policy`, `Cross-Origin-Resource-Policy: same-site`, HSTS when behind TLS |
 | CSP | Not set by the API (which returns JSON only). If the interface is served by this same process, a CSP should be added at the reverse proxy — see the deployment guide, which includes a recommended policy. This is an open item, not a claim. |
 | CORS | Not enabled. The interface is same-origin, so no cross-origin allowance is needed. |
-| CSRF | `SameSite=Lax` cookie plus a server-side check: any state-changing request that carries an `Origin` header must match `Host`, otherwise `403 CROSS_SITE_BLOCKED` |
+| CSRF | `SameSite=Lax` cookie plus a server-side check. A state-changing request is accepted when the browser sends `Sec-Fetch-Site: same-origin`, or when its `Origin` host matches `Host`, `X-Forwarded-Host`, or the configured `PUBLIC_HOST` allow-list; anything else returns `403 CROSS_SITE_BLOCKED`. Proxy-aware matching exists because comparing `Origin` to `Host` alone rejected legitimate sign-ins behind a reverse proxy (change-history defect 16); the protection against a genuinely foreign origin is unchanged. |
 | Clickjacking | `X-Frame-Options` via helmet |
 | Compression | gzip; no side-channel-sensitive responses are shared across users |
 | Error leakage | Central handler returns a generic message for 5xx; stack traces go to the server log only |
