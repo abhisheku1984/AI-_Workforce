@@ -3,9 +3,25 @@ import { config } from '../config.js';
 import { sendError } from '../lib/http.js';
 
 /** Attaches req.user (principal) if a valid session cookie is present. */
-export function authenticate(req, _res, next) {
+/**
+ * Session token extraction.
+ *
+ * The cookie is the primary transport. A bearer token is also accepted, because some
+ * environments (embedded preview frames, browsers with third-party cookies blocked,
+ * portals that strip Set-Cookie) do not persist cookies at all. Both carry the same
+ * opaque session token, so revocation — sign-out or password change — kills both.
+ */
+export function sessionTokenFrom(req) {
+  const header = String(req.headers.authorization || '');
+  const m = /^Bearer\s+([A-Za-z0-9_-]{16,})$/.exec(header);
+  if (m) return m[1];
   const cookies = parseCookies(req.headers.cookie || '');
-  const token = cookies[SESSION_COOKIE] || null;
+  return cookies[SESSION_COOKIE] || null;
+}
+
+export function authenticate(req, _res, next) {
+  const token = sessionTokenFrom(req);
+  req.sessionTransport = req.headers.authorization ? 'bearer' : (token ? 'cookie' : 'none');
   req.user = token ? loadPrincipal(token) : null;
   if (config.debugAuthHeaders && req.path.startsWith('/auth')) {
     // Evidence for diagnosing "sign-in succeeded but the session did not stick".
@@ -19,7 +35,8 @@ export function authenticate(req, _res, next) {
       x_forwarded_proto: req.headers['x-forwarded-proto'] || null,
       sec_fetch_site: req.headers['sec-fetch-site'] || null,
       sec_fetch_mode: req.headers['sec-fetch-mode'] || null,
-      cookie_present: Boolean(token),
+      token_transport: req.sessionTransport,
+      cookie_present: req.sessionTransport === 'cookie',
       resolved: Boolean(req.user),
     }));
   }

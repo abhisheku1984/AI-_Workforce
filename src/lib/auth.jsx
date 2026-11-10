@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { api, getSessionToken, clearSessionToken } from './api';
 
 const AuthContext = createContext(null);
 
@@ -6,9 +7,13 @@ export function AuthProvider({ children }) {
   const [state, setState] = useState({ loading: true, user: null, permissions: [], org: null, roles: [], modules: [], scopes: null, isPlatformAdmin: false, notifications: 0, authIssue: null, diagnostics: null });
 
   const refresh = useCallback(async () => {
-    const res = await fetch('/api/auth/me', { credentials: 'same-origin' });
-    if (!res.ok) { setState((s) => ({ ...s, loading: false, user: null })); return null; }
-    const { data } = await res.json();
+    let data;
+    try {
+      ({ data } = await api.get('/api/auth/me'));
+    } catch (err) {
+      setState((s) => ({ ...s, loading: false, user: null, authIssue: err?.code || 'REQUEST_FAILED' }));
+      return null;
+    }
     if (!data.user) {
       // Distinguish "never signed in" from "signed in but the session did not stick".
       // Without this the app silently bounces to the sign-in page and the user has no idea why.
@@ -42,7 +47,8 @@ export function AuthProvider({ children }) {
     refresh,
     can,
     signOut: async () => {
-      await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+      try { await api.post('/api/auth/logout', {}); } catch { /* signing out locally regardless */ }
+      clearSessionToken();
       setState({ loading: false, user: null, permissions: [], org: null, roles: [], modules: [], scopes: null, isPlatformAdmin: false, notifications: 0 });
     },
   }), [state, refresh, can]);
@@ -68,16 +74,16 @@ export function useApi(path, { deps = [], skip = false } = {}) {
     setState((s) => ({ ...s, loading: true, error: null }));
     (async () => {
       try {
-        const res = await fetch(path, { credentials: 'same-origin' });
-        const json = await res.json().catch(() => null);
+        const json = await api.get(path);
         if (!alive) return;
-        if (!res.ok) {
-          setState({ loading: false, data: null, error: json?.error?.message || 'Could not load data.', code: json?.error?.code });
-          return;
-        }
         setState({ loading: false, data: json?.data, meta: json?.meta, error: null });
       } catch (e) {
-        if (alive) setState({ loading: false, data: null, error: 'Network problem. Please check your connection and try again.' });
+        if (!alive) return;
+        setState({
+          loading: false, data: null,
+          error: e?.message || 'Network problem. Please check your connection and try again.',
+          code: e?.code,
+        });
       }
     })();
     return () => { alive = false; };

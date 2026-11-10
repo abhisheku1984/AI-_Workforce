@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
+import { api, setSessionToken, ApiClientError } from '../lib/api';
 
 const DEMO_ACCOUNTS = [
   { org: 'IT Services (Nexora)', email: 'admin@nexora-demo.example', role: 'Organization Administrator' },
@@ -34,17 +35,10 @@ export default function LoginPage() {
     setError(null);
     setBusy(true);
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        setError(json?.error?.message || 'Sign-in failed. Check your email and password.');
-        return;
-      }
+      const json = await api.post('/api/auth/login', { email, password });
+      // Keep the session token as well as the cookie: some environments block cookies,
+      // and without this the very next request would arrive unauthenticated.
+      if (json?.data?.token) setSessionToken(json.data.token);
       const principal = await refresh();
       if (!principal) {
         // The password was accepted but the session cookie did not come back with the next
@@ -57,8 +51,12 @@ export default function LoginPage() {
         return;
       }
       navigate(location.state?.from || '/', { replace: true });
-    } catch {
-      setError('Could not reach the server. Please try again.');
+    } catch (err) {
+      setError(
+        err instanceof ApiClientError
+          ? err.message
+          : 'Could not reach the server. Please try again.'
+      );
     } finally {
       setBusy(false);
     }

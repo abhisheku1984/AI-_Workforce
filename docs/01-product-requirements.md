@@ -271,7 +271,7 @@ No claim in this document should be read as an achieved outcome. There are no cu
 The release is considered shippable when:
 
 1. All MUST requirements above are implemented. ✅ (7 SHOULD/MUST gaps listed in §7.3 are excluded from this release; AUTH-8 is SHOULD.)
-2. The automated suite passes with zero failures. ✅ 98 test cases, 99 recorded behaviours, 0 failures — see `docs/test-report.md`.
+2. The automated suite passes with zero failures. ✅ 100 test cases, 101 recorded behaviours, 0 failures — see `docs/test-report.md`.
 3. The production build succeeds. ✅
 4. Deployment, backup and restore are documented and have been executed at least once. ✅ documented; restore tested per `docs/09-deployment-and-backup.md`.
 5. The 15 project documents are current. ✅

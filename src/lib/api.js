@@ -1,4 +1,23 @@
-/** Thin fetch wrapper. Cookies carry the session; credentials always included. */
+/**
+ * Thin fetch wrapper.
+ *
+ * The session travels BOTH ways:
+ *   1. as the `wiq_session` cookie (HttpOnly, SameSite as configured), and
+ *   2. as a bearer token held in this browser's localStorage.
+ *
+ * The cookie is the primary mechanism and is what protects a normal deployment. The
+ * bearer token exists because some environments block or partition cookies outright —
+ * an embedded preview frame, a browser with third-party cookies disabled, or a portal
+ * that strips Set-Cookie. Without it, sign-in "succeeds" and every following request
+ * arrives unauthenticated, which is indistinguishable from a wrong password to the user.
+ *
+ * The token is the same opaque 32-byte session token, so the server revokes both
+ * representations together: signing out, or changing a password, invalidates it.
+ * `credentials: 'include'` is used so the cookie path keeps working even when the app is
+ * served from a different origin than the API.
+ */
+const TOKEN_KEY = 'wiq.session.token';
+
 export class ApiClientError extends Error {
   constructor(message, status, code, details) {
     super(message);
@@ -8,8 +27,37 @@ export class ApiClientError extends Error {
   }
 }
 
+export function getSessionToken() {
+  try {
+    return window.localStorage.getItem(TOKEN_KEY) || null;
+  } catch {
+    return null; // private mode / storage disabled — cookie still applies
+  }
+}
+
+export function setSessionToken(token) {
+  try {
+    if (token) window.localStorage.setItem(TOKEN_KEY, token);
+    else window.localStorage.removeItem(TOKEN_KEY);
+  } catch {
+    /* storage unavailable — cookie still applies */
+  }
+}
+
+export function clearSessionToken() {
+  setSessionToken(null);
+}
+
+function authHeaders(headers) {
+  const token = getSessionToken();
+  return token ? { ...headers, authorization: `Bearer ${token}` } : { ...headers };
+}
+
+/** Raised when the server answers 401 and the caller needs to re-authenticate. */
+export const UNAUTHENTICATED = 'UNAUTHENTICATED';
+
 async function request(path, { method = 'GET', body, headers = {}, signal } = {}) {
-  const opts = { method, credentials: 'same-origin', headers: { ...headers }, signal };
+  const opts = { method, credentials: 'include', headers: authHeaders(headers), signal };
   if (body !== undefined) {
     if (body instanceof FormData) {
       opts.body = body;
@@ -24,6 +72,7 @@ async function request(path, { method = 'GET', body, headers = {}, signal } = {}
   try { json = text ? JSON.parse(text) : null; } catch { json = null; }
   if (!res.ok) {
     const err = json?.error || {};
+    if (res.status === 401) clearSessionToken();
     throw new ApiClientError(err.message || `Request failed (${res.status})`, res.status, err.code || 'REQUEST_FAILED', err.details);
   }
   return json;
@@ -48,7 +97,7 @@ export function qs(params = {}) {
 }
 
 export async function downloadFile(url, filename) {
-  const res = await fetch(url, { credentials: 'same-origin' });
+  const res = await fetch(url, { credentials: 'include', headers: authHeaders({}) });
   if (!res.ok) {
     let msg = 'Download failed.';
     try { msg = (await res.json()).error?.message || msg; } catch { /* ignore */ }

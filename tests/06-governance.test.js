@@ -279,6 +279,54 @@ test('Automation, approvals, reports and operations', async (t) => {
     record('Authentication', 'Session cookie flags match the transport in use', true);
   });
 
+  await t.test('a bearer session token works where cookies are blocked', async () => {
+    // Sign in and take ONLY the token — no cookie jar, exactly like a browser that
+    // refuses to store cookies inside a sandboxed preview frame.
+    const login = await fetch(`${baseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: 'admin@alpha.test', password: 'DemoPass!2026' }),
+    });
+    const { data } = await login.json();
+    assert.ok(data.token, 'login returns a session token');
+
+    const me = await fetch(`${baseUrl}/api/auth/me`, {
+      headers: { authorization: `Bearer ${data.token}` },
+    });
+    const meBody = await me.json();
+    assert.equal(meBody.data.user.email, 'admin@alpha.test', 'bearer token authenticates');
+
+    // Permission enforcement is unchanged: it is the same principal.
+    const dashboard = await fetch(`${baseUrl}/api/analytics/dashboard`, {
+      headers: { authorization: `Bearer ${data.token}` },
+    });
+    assert.equal(dashboard.status, 200);
+
+    // A forged token is refused.
+    const bad = await fetch(`${baseUrl}/api/auth/me`, {
+      headers: { authorization: 'Bearer not-a-real-token-at-all' },
+    });
+    assert.equal((await bad.json()).data.user, null);
+    record('Authentication', 'Session works without cookies via a bearer token', true);
+  });
+
+  await t.test('signing out revokes a bearer token', async () => {
+    const login = await fetch(`${baseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: 'admin@alpha.test', password: 'DemoPass!2026' }),
+    });
+    const token = (await login.json()).data.token;
+    const auth = { authorization: `Bearer ${token}`, 'content-type': 'application/json' };
+
+    const out = await fetch(`${baseUrl}/api/auth/logout`, { method: 'POST', headers: auth });
+    assert.equal(out.status, 200);
+
+    const me = await fetch(`${baseUrl}/api/auth/me`, { headers: auth });
+    assert.equal((await me.json()).data.user, null, 'token must be dead after sign-out');
+    record('Authentication', 'Sign-out revokes the token as well as the cookie', true);
+  });
+
   await t.test('no secrets are committed to the repository', async () => {
     const files = [
       'server/config.js', 'server/index.js', 'server/auth/session.js', 'server/auth/passwords.js',

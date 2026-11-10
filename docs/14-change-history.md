@@ -30,7 +30,7 @@ This is the release record. It lists what was built in this release, and every d
 
 | Item | Result |
 | --- | --- |
-| Automated suites | 6 suites, 98 test cases, 99 recorded behaviours, **0 failures** |
+| Automated suites | 6 suites, 100 test cases, 101 recorded behaviours, **0 failures** |
 | Production build | Succeeds (Vite build, main bundle ~647 kB, ~192 kB gzipped) |
 | Served SPA | Root, hashed asset and a deep route all verified as served |
 | API walk-through | Health, sign-in, principal, dashboard, assistant, forecast, insights, reports exercised against the seeded demonstration database |
@@ -64,7 +64,7 @@ Each of these was found by running the product, not by reading it. They are list
 | 19 | **A session that did not resolve was reported as "not signed in"** | `GET /api/auth/me` returned `{user: null}` for both "never signed in" and "signed in but the cookie did not stick", so the interface silently redirected and the user had no diagnosis. | The endpoint now returns `reason` (`NO_SESSION_COOKIE` or `SESSION_NOT_RECOGNISED`) plus diagnostics (cookie present, cookie secure, HTTPS detected), and the sign-in page states plainly that the session did not stick and which configuration causes it. | An authentication failure that looks identical to "you are not signed in yet" is a support cost with no diagnostic value. |
 | 20 | **`SameSite=Lax` session cookie was never sent inside the preview frame** | Browser sign-ins were still bouncing back to the sign-in page after the framing header was fixed. Every browser session in the database had `last_seen_at` equal to `created_at`, proving the cookie never returned, while every `curl` session resolved normally. A `Lax` cookie is not sent on a cross-site subresource request, and an app framed by a different top-level origin makes `fetch` calls that are cross-site. | The policy is now configuration: `COOKIE_SAMESITE=none` sets `SameSite=None`, `Secure` is applied automatically when the request arrived over HTTPS, and plain HTTP falls back to `Lax` rather than sending a cookie the browser would discard. One test asserts the attributes for both transports. | A cookie attribute is a claim about *how the page is embedded*, not about the app. Verify it against the real embedding, not against a same-origin curl. The diagnostic that finally proved it was comparing `last_seen_at` to `created_at` per session. |
 | 21 | **An authentication problem produced no server-side evidence** | Nothing in the log said whether a request arrived with a cookie, what `Origin`/`Sec-Fetch-Site` it carried, or whether the session resolved — so three rounds of diagnosis ran on inference alone. | `DEBUG_AUTH_HEADERS=true` logs host, origin, forwarded headers, fetch metadata and whether a cookie was present/resolved for `/api/auth/*`. Header values only; no cookie values, no passwords. | When a symptom spans two requests, log both ends of the boundary before theorising. |### 4. Corrections to test expectations (not product defects)
-
+| 22 | **The session relied on a cookie the embedding environment would not store** | In the preview frame the browser sent the sign-in POST, received the session cookie, and then sent the very next `/auth/me` request with **no cookie at all** and no `Authorization` header — while `Origin` matched `Host`, `Sec-Fetch-Site` was `same-origin` and `X-Forwarded-Proto` was absent. The cookie was being blocked or stripped, not rejected; the SameSite and framing fixes could not help because there was nothing to send. The environment also never forwarded `X-Forwarded-Proto`, so the HTTPS-aware cookie flags silently degraded to the plain-HTTP branch. | The session now travels two ways: the `HttpOnly` cookie as before, and an `Authorization: Bearer` token for clients that cannot keep cookies. Both resolve to the same session row, so sign-out, password change and expiry revoke both. The web client stores the token from the sign-in response and sends it on every call. Two tests assert bearer-only authentication and sign-out revocation. | A session design that assumes the cookie will come back fails silently and looks like a wrong password. Logged request headers turned a four-round guess into a one-line answer — instrument the boundary first. |
 Recorded so the distinction between "the product was wrong" and "the test was wrong" is preserved:
 
 | # | Expectation | Reality | Resolution |
@@ -103,7 +103,7 @@ These appear in `docs/13-roadmap.md` with the evidence that would justify each o
 npm ci                       # install
 npm run build                # compile the interface
 npm start                    # run the product (needs SESSION_SECRET in production mode)
-npm test                     # six suites, 98 cases
+npm test                     # six suites, 100 cases
 npm run test:report          # regenerate docs/test-report.md from a real run
 npm run seed                 # create the demonstration tenants (development only)
 ```

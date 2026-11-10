@@ -3,7 +3,7 @@ import { getDb, now } from '../db/index.js';
 import { hashPassword, verifyPassword, assertPasswordPolicy, randomToken } from '../auth/passwords.js';
 import { createSession, revokeSession, sessionCookie, SESSION_COOKIE, revokeAllUserSessions, parseCookies } from '../auth/session.js';
 import { config } from '../config.js';
-import { requireAuth, ah } from '../auth/middleware.js';
+import { requireAuth, ah, sessionTokenFrom } from '../auth/middleware.js';
 import { audit } from '../lib/audit.js';
 import { ApiError, ok } from '../lib/http.js';
 import { ROLE_TEMPLATES, PERMISSIONS } from '../auth/permissions.js';
@@ -52,13 +52,15 @@ router.post('/login', ah(async (req, res) => {
   const { token, expiresAt } = createSession({ userId: user.id, orgId: user.org_id, ip: req.ip, userAgent: req.headers['user-agent'] });
   res.setHeader('Set-Cookie', sessionCookie(token, expiresAt, { req }));
   audit(req, { action: 'auth.login', entityType: 'user', entityId: user.id, summary: `${user.email} signed in`, orgId: user.org_id });
-  return ok(res, { expiresAt, mustChangePassword: Boolean(user.must_change_password) });
+  // The token is returned so a client whose browser blocks cookies can still authenticate.
+  // It is the same opaque session token as the cookie; storing it is optional.
+  return ok(res, { expiresAt, token, mustChangePassword: Boolean(user.must_change_password) });
 }));
 
 router.post('/logout', ah(async (req, res) => {
-  const cookies = req.headers.cookie || '';
-  const m = new RegExp(`${SESSION_COOKIE}=([^;]+)`).exec(cookies);
-  if (m) revokeSession(decodeURIComponent(m[1]));
+  // Revoke whichever representation this client used (cookie or bearer).
+  const token = sessionTokenFrom(req);
+  if (token) revokeSession(token);
   if (req.user) audit(req, { action: 'auth.logout', entityType: 'user', entityId: req.user.user.id, summary: `${req.user.user.email} signed out` });
   res.setHeader('Set-Cookie', sessionCookie('', new Date(0), { clear: true, req }));
   return ok(res, { signedOut: true });
@@ -69,6 +71,8 @@ function sessionDiagnostics(req) {
   const cookies = parseCookies(req.headers.cookie || '');
   return {
     cookie_present: Boolean(cookies[SESSION_COOKIE]),
+    token_present: Boolean(req.headers.authorization),
+    transport: req.sessionTransport || 'none',
     cookie_secure: config.secureCookies,
     https_detected: req.secure || req.headers['x-forwarded-proto'] === 'https',
   };
@@ -83,7 +87,7 @@ router.get('/me', ah(async (req, res) => {
     const diag = sessionDiagnostics(req);
     return ok(res, {
       user: null,
-      reason: diag.cookie_present ? 'SESSION_NOT_RECOGNISED' : 'NO_SESSION_COOKIE',
+      reason: (diag.cookie_present || diag.token_present) ? 'SESSION_NOT_RECOGNISED' : 'NO_SESSION_COOKIE',
       diagnostics: diag,
     });
   }
