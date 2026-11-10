@@ -1,0 +1,47 @@
+{
+  "name": "workforceiq",
+  "version": "1.0.0",
+  "private": true,
+  "description": "WorkforceIQ — AI Workforce & Business Operations Intelligence Platform",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "concurrently -n api,web -c cyan,magenta \"node server/index.js\" \"vite --host 0.0.0.0\"",
+    "dev:api": "node server/index.js",
+    "build": "vite build",
+    "start": "NODE_ENV=production node server/index.js",
+    "preview": "npm run build && NODE_ENV=production node server/index.js",
+    "migrate": "node server/db/migrate.js",
+    "seed": "node server/seed/run.js",
+    "seed:demo": "node server/seed/run.js",
+    "test": "node --test --test-concurrency=1 tests/*.test.js",
+    "test:report": "node tests/run-report.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "compression": "^1.7.4",
+    "cookie": "^0.7.2",
+    "express": "^4.21.2",
+    "helmet": "^8.1.0",
+    "multer": "^2.0.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0",
+    "recharts": "^3.10.1",
+    "xlsx": "^0.18.5",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^9.1.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.2",
+    "vite": "^5.4.11"
+  }
+}
