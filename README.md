@@ -10,12 +10,33 @@ It replaces the monthly spreadsheet ritual with a system where every number has 
 
 ## Quick start
 
+**On Windows, or running it on your own machine for the first time?** Follow
+[`LOCAL-SETUP.md`](LOCAL-SETUP.md) — it has PowerShell commands, PyCharm setup and the
+Windows-specific fixes. The short version:
+
+```powershell
+git clone -b arena/441f1caa-ai-workforce https://github.com/abhisheku1984/AI-_Workforce.git
+cd AI-_Workforce
+npm install
+npm run migrate
+npm run seed
+npm run build
+npm start            # http://localhost:4000
+```
+
+The same thing on macOS / Linux:
+
 ```bash
 npm ci                       # install dependencies
 npm run migrate              # create the database (38 tables)
 npm run seed                 # create three fictional demonstration tenants
 npm run dev                  # API on :4000, interface on :5173
 ```
+
+`npm start` runs the built app on a single port (4000) and works on Windows, macOS and Linux:
+the production start script sets `NODE_ENV` in JavaScript rather than using Unix-only
+`VAR=value command` syntax, and generates a `SESSION_SECRET` into `.env` on first run if none
+is set.
 
 Open `http://localhost:5173` and sign in:
 

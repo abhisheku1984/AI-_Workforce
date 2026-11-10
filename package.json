@@ -2,7 +2,7 @@
   "name": "workforceiq",
   "version": "1.0.0",
   "private": true,
-  "description": "WorkforceIQ — AI Workforce & Business Operations Intelligence Platform",
+  "description": "WorkforceIQ \u2014 AI Workforce & Business Operations Intelligence Platform",
   "type": "module",
   "engines": {
     "node": ">=20"
@@ -11,8 +11,9 @@
     "dev": "concurrently -n api,web -c cyan,magenta \"node server/index.js\" \"vite --host 0.0.0.0\"",
     "dev:api": "node server/index.js",
     "build": "vite build",
-    "start": "NODE_ENV=production node server/index.js",
-    "preview": "npm run build && NODE_ENV=production node server/index.js",
+    "start": "node server/index.js",
+    "start:prod": "node scripts/start-prod.mjs",
+    "preview": "npm run build && node scripts/start-prod.mjs",
     "migrate": "node server/db/migrate.js",
     "seed": "node server/seed/run.js",
     "seed:demo": "node server/seed/run.js",

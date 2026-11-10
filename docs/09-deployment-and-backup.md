@@ -72,7 +72,9 @@ EOF'
 sudo -u workforceiq npm run migrate
 
 # 6. start it once in the foreground to confirm it works
-sudo -u workforceiq npm start
+#    (npm start serves the built app; npm run start:prod adds production mode and
+#     generates a session secret into .env on first run — cross-platform)
+sudo -u workforceiq npm run start:prod
 #   → "[api] WorkforceIQ listening on 0.0.0.0:4000 (production)"
 #   → "[api] AI provider: local (deterministic, grounded)"
 #   Ctrl-C to stop
