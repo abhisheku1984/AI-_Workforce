@@ -144,7 +144,10 @@ app.use('/api', (_req, res) => sendError(res, 404, 'NOT_FOUND', 'That API endpoi
 // entry document must NOT be: a client holding a stale index.html loads a stale bundle
 // and runs old code against a new API — which is exactly how a fixed defect appears to
 // still be broken. index.html is therefore served no-store, with a visible build stamp.
-const distDir = path.resolve(import.meta.dirname, '..', 'dist');
+const ROOT = path.resolve(import.meta.dirname, '..');
+// DIST_DIR lets a build live elsewhere (used by the tests, and by anyone shipping a
+// prebuilt interface from a different location).
+const distDir = process.env.DIST_DIR ? path.resolve(process.env.DIST_DIR) : path.join(ROOT, 'dist');
 function buildStamp() {
   try {
     const entry = fs.readdirSync(path.join(distDir, 'assets')).find((f) => /^index-.*\.js$/.test(f));
@@ -155,7 +158,35 @@ function buildStamp() {
   }
 }
 
-if (fs.existsSync(distDir)) {
+// dist/ only counts if it actually contains an entry document. A directory left behind by a
+// failed or removed build must not shadow a second chance at serving the interface.
+const hasBuiltInterface = fs.existsSync(path.join(distDir, 'index.html'));
+
+if (!hasBuiltInterface) {
+  // The API works without the interface, but the landing page has to say so in words a human
+  // can act on, rather than a JSON 404 that looks like a routing bug.
+  const hint = fs.existsSync(path.join(ROOT, 'prebuilt', 'dist', 'index.html'))
+    ? 'A prebuilt interface ships with this checkout. Install it with: npm run use-prebuilt'
+    : 'Build it with: npm run build   (or run the dev server with: npm run dev)';
+  app.get('/', (_req, res) => {
+    res.status(503).type('html').send(
+      '<!doctype html><html lang="en"><head><meta charset="utf-8">' +
+      '<title>WorkforceIQ — interface not built</title>' +
+      '<style>body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;' +
+      'max-width:44rem;margin:4rem auto;padding:0 1.5rem;line-height:1.6;color:#1b2230}' +
+      'code{background:#eceef2;padding:.15rem .4rem;border-radius:.25rem;font-size:.95em}' +
+      'h1{font-size:1.4rem;margin-bottom:.25rem}p{margin:.6rem 0}.hint{background:#eef2ff;' +
+      'border-left:3px solid #6366f1;padding:.75rem 1rem;border-radius:.25rem}</style></head>' +
+      '<body><h1>The interface is not built</h1>' +
+      '<p>The API is running, but no compiled interface was found in <code>dist/</code>.</p>' +
+      `<p class="hint">${hint}</p>` +
+      '<p>The REST API is unaffected: <code>/api/health</code> responds normally.</p>' +
+      '</body></html>',
+    );
+  });
+}
+
+if (hasBuiltInterface) {
   const stamp = buildStamp();
 
   // Hashed assets: immutable and cacheable for a year.
@@ -194,8 +225,12 @@ export function start(port = config.port) {
     console.log(`[api] WorkforceIQ listening on http://localhost:${server.address().port} (${config.env})`);
     console.log(`[api] AI provider: ${config.ai.provider}${config.ai.provider !== 'local' ? ` (${config.ai.model})` : ' (deterministic, grounded)'}`);
     if (!fs.existsSync(path.join(distDir, 'index.html'))) {
-      console.warn('[api] No built interface found. The API works, but http://localhost:' + server.address().port + ' has no pages.');
-      console.warn('[api] Build it with: npm run build   (or use: npm run dev for hot reload)');
+      console.warn('[api] No built interface in dist/ — http://localhost:' + server.address().port + ' will explain how to fix that.');
+      if (fs.existsSync(path.join(ROOT, 'prebuilt', 'dist', 'index.html'))) {
+        console.warn('[api] A prebuilt interface ships with this checkout: run  npm run use-prebuilt');
+      } else {
+        console.warn('[api] Build it with: npm run build   (or use: npm run dev for hot reload)');
+      }
     }
   });
   server.on('error', (err) => {

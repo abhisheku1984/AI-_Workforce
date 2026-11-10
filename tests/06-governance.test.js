@@ -390,6 +390,8 @@ test('Automation, approvals, reports and operations', async (t) => {
 // the behaviour so it cannot regress: a direct run must listen, an import must not.
 // ---------------------------------------------------------------------------
 
+const startupDir = fs.mkdtempSync(path.join(os.tmpdir(), 'workforceiq-startup-'));
+
 test('startup: a direct run serves traffic, an import opens no port', async (t) => {
   const { spawn, spawnSync } = await import('node:child_process');
   const nodeMajor = Number(process.versions.node.split('.')[0]);
@@ -401,7 +403,6 @@ test('startup: a direct run serves traffic, an import opens no port', async (t) 
   }
 
   const root = path.resolve(import.meta.dirname, '..');
-  const startupDir = fs.mkdtempSync(path.join(os.tmpdir(), 'workforceiq-startup-'));
 
   await t.test('running server/index.js directly opens a port and reports the URL', async () => {
     const port = 4700 + Math.floor(Math.random() * 200);
@@ -450,5 +451,69 @@ test('startup: a direct run serves traffic, an import opens no port', async (t) 
     const assets = fs.readdirSync(path.join(installDir, 'assets'));
     assert.ok(assets.some((f) => f.endsWith('.js')), 'no JavaScript bundle installed');
     record('Startup', 'A prebuilt interface can be installed when the bundler is blocked', true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Packaging.
+//
+// The interface snapshot in prebuilt/dist must actually be committed. An unanchored
+// "dist/" in .gitignore also matches "prebuilt/dist/", which silently excluded it:
+// `npm run use-prebuilt` shipped while the bundle it installs did not.
+// ---------------------------------------------------------------------------
+
+test('packaging: the prebuilt interface is not excluded by .gitignore', async (t) => {
+  const { spawnSync } = await import('node:child_process');
+  const root = path.resolve(import.meta.dirname, '..');
+
+  await t.test('git does not ignore prebuilt/dist', () => {
+    const result = spawnSync('git', ['check-ignore', '-v', 'prebuilt/dist/index.html'], { cwd: root, encoding: 'utf8' });
+    assert.equal(result.status, 1, `prebuilt/dist is ignored by: ${result.stdout.trim() || '(git unavailable)'}`);
+    record('Packaging', 'The committed interface snapshot is not excluded by .gitignore', true);
+  });
+
+  await t.test('.gitignore still ignores a local build and local data', () => {
+    for (const candidate of ['dist/index.html', 'node_modules/express', 'data/workforceiq.db', '.env']) {
+      const result = spawnSync('git', ['check-ignore', '-q', candidate], { cwd: root });
+      assert.equal(result.status, 0, `${candidate} should be ignored but is not`);
+    }
+    record('Packaging', 'Local build output and secrets remain ignored', true);
+  });
+
+  await t.test('an unbuilt checkout explains itself instead of 404ing', async () => {
+    const { spawn } = await import('node:child_process');
+    const port = 4900 + Math.floor(Math.random() * 90);
+    const child = spawn(process.execPath, ['server/index.js'], {
+      cwd: root,
+      env: {
+        ...process.env,
+        PORT: String(port),
+        DATA_DIR: startupDir,
+        DB_FILE: path.join(startupDir, 'nodist.db'),
+        DIST_DIR: path.join(startupDir, 'no-such-dist'),
+        NODE_ENV: 'test',
+      },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    const ready = await new Promise((resolve) => {
+      const timer = setTimeout(() => resolve(false), 20000);
+      child.stdout.on('data', (d) => {
+        if (/listening on http:\/\/localhost:\d+/.test(d.toString())) { clearTimeout(timer); resolve(true); }
+      });
+      child.once('exit', () => { clearTimeout(timer); resolve(false); });
+    });
+    try {
+      assert.ok(ready, 'server did not start');
+      const res = await fetch(`http://127.0.0.1:${port}/`);
+      assert.equal(res.status, 503);
+      const html = await res.text();
+      assert.match(html, /interface is not built/i);
+      assert.match(html, /npm run use-prebuilt|npm run build/);
+      const health = await fetch(`http://127.0.0.1:${port}/api/health`);
+      assert.equal(health.status, 200, 'the API must keep working without an interface');
+      record('Packaging', 'Without dist/, the landing page explains the fix and the API stays healthy', true);
+    } finally {
+      child.kill('SIGTERM');
+    }
   });
 });

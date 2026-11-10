@@ -252,6 +252,9 @@ npm run use-prebuilt
 npm start
 ```
 
+If it answers `No prebuilt bundle found in prebuilt/dist`, your checkout predates the commit that
+added the bundle (`git pull` fixes it) — the directory is only there if the repository contains it.
+
 Trade-off, stated plainly: it is a **snapshot of the source as committed**, not a fresh build. If
 you edit anything under `src/`, the change will not appear until you rebuild on a machine where
 the bundler is permitted.

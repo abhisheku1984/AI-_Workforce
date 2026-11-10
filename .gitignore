@@ -1,13 +1,17 @@
 node_modules/
-dist/
-data/*.db
-data/*.db-*
-data/uploads/
-data/exports/
+
+# The build output of THIS working copy. Note the leading slash: an unanchored
+# "dist/" also matches prebuilt/dist, which silently excluded the interface
+# snapshot we deliberately commit so the app can run where the bundler is blocked.
+/dist/
+/data/*.db
+/data/*.db-*
+/data/uploads/
+/data/exports/
 .env
 .env.local
 *.log
 .DS_Store
 tests/artifacts/
 .playwright-cli/
-data/.dev-session-secret
+/data/.dev-session-secret
