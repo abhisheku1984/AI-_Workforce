@@ -101,3 +101,34 @@ export function speechLocale(navigatorLanguage) {
   // A bare "en" is fine; a malformed tag falls back rather than throwing in SpeechSynthesis.
   return /^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$/i.test(tag) ? tag : 'en-IN';
 }
+
+/**
+ * Choose a speech voice.
+ *
+ * Priority: the voice the user picked by name, then an English voice from India, then any
+ * English voice, then the platform default. The Indian-English preference is a default, not a
+ * constraint — an explicit choice always wins, and the list is offered in the interface.
+ */
+export function pickVoice(voices = [], chosenName = '') {
+  if (!Array.isArray(voices) || voices.length === 0) return null;
+  if (chosenName) {
+    const chosen = voices.find((v) => v.name === chosenName);
+    if (chosen) return chosen;
+  }
+  const indian = voices.find((v) => /^en[-_]IN$/i.test(v.lang));
+  if (indian) return indian;
+  const localIndian = voices.find((v) => /^en[-_]IN$/i.test(v.lang) && v.localService);
+  if (localIndian) return localIndian;
+  const english = voices.find((v) => /^en([-_]|$)/i.test(v.lang));
+  return english || voices[0] || null;
+}
+
+/** Group voices for a picker, preferring a short, useful list over 200 system defaults. */
+export function groupVoices(voices = []) {
+  const list = Array.isArray(voices) ? voices : [];
+  return {
+    indian: list.filter((v) => /^en[-_]IN$/i.test(v.lang)),
+    english: list.filter((v) => /^en/i.test(v.lang) && !/^en[-_]IN$/i.test(v.lang)),
+    other: list.filter((v) => !/^en/i.test(v.lang)),
+  };
+}

@@ -17,8 +17,8 @@
  *    appears on page load.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { speechLocale, speechSummary, toSpeechText } from './voice.js';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { pickVoice, speechLocale, speechSummary, toSpeechText } from './voice.js';
 
 const SpeechRecognition =
   typeof window !== 'undefined'
@@ -50,6 +50,10 @@ export function useVoice({ onTranscript, onError } = {}) {
   });
   const [interim, setInterim] = useState('');
   const [error, setError] = useState(null);
+  const [voices, setVoices] = useState([]);
+  const [voiceName, setVoiceName] = useState(() => {
+    try { return localStorage.getItem('wiq.voice.name') || ''; } catch { return ''; }
+  });
 
   const recognitionRef = useRef(null);
   const transcriptRef = useRef(onTranscript);
@@ -81,7 +85,9 @@ export function useVoice({ onTranscript, onError } = {}) {
     if (recognitionRef.current) return; // already running
 
     const recognition = new SpeechRecognition();
-    recognition.lang = speechLocale(typeof navigator !== 'undefined' ? navigator.language : 'en-IN');
+    // Recognition listens in the same English variant we speak in, so an Indian-English
+    // speaker is not transcribed by a US-English acoustic model.
+    recognition.lang = preferredVoice?.lang || speechLocale(typeof navigator !== 'undefined' ? navigator.language : 'en-IN');
     recognition.interimResults = true;
     recognition.continuous = false;
     recognition.maxAlternatives = 1;
@@ -128,12 +134,36 @@ export function useVoice({ onTranscript, onError } = {}) {
       setListening(false);
       setError(err.message || 'Could not start the microphone.');
     }
-  }, [availability.input, availability.reason, SpeechRecognition]);
+  }, [availability.input, availability.reason, preferredVoice, SpeechRecognition]);
 
   const toggleListening = useCallback(() => {
     if (listening) stopListening();
     else startListening();
   }, [listening, startListening, stopListening]);
+
+  /* ---------------------------------------------------------------- voice selection */
+
+  // SpeechSynthesis populates asynchronously and fires voiceschanged when ready. Choosing a
+  // voice once and caching it is the documented workaround for Chrome returning [] on first call.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return undefined;
+    const load = () => {
+      const found = window.speechSynthesis.getVoices() || [];
+      if (found.length) setVoices(found);
+    };
+    load();
+    window.speechSynthesis.addEventListener?.('voiceschanged', load);
+    return () => window.speechSynthesis.removeEventListener?.('voiceschanged', load);
+  }, []);
+
+  const preferredVoice = useMemo(
+    () => pickVoice(voices, voiceName),
+    [voices, voiceName],
+  );
+
+  useEffect(() => {
+    try { localStorage.setItem('wiq.voice.name', voiceName || ''); } catch { /* private mode */ }
+  }, [voiceName]);
 
   /* ---------------------------------------------------------------- speech out */
 
@@ -149,7 +179,12 @@ export function useVoice({ onTranscript, onError } = {}) {
     try {
       window.speechSynthesis.cancel(); // one utterance at a time
       const utterance = new window.SpeechSynthesisUtterance(source);
-      utterance.lang = speechLocale(typeof navigator !== 'undefined' ? navigator.language : 'en-IN');
+      if (preferredVoice) {
+        utterance.voice = preferredVoice;
+        utterance.lang = preferredVoice.lang;
+      } else {
+        utterance.lang = speechLocale(typeof navigator !== 'undefined' ? navigator.language : 'en-IN');
+      }
       utterance.rate = 1;
       utterance.pitch = 1;
       utterance.onstart = () => setSpeaking(true);
@@ -161,7 +196,7 @@ export function useVoice({ onTranscript, onError } = {}) {
       setError(err.message || 'Could not speak the answer.');
       return false;
     }
-  }, [availability.output]);
+  }, [availability.output, preferredVoice]);
 
   // Cancel any speech when the page is left, so audio never follows the user around.
   useEffect(() => () => {
@@ -177,6 +212,10 @@ export function useVoice({ onTranscript, onError } = {}) {
     setSpeakAnswers,
     interim,
     error,
+    voices,
+    voiceName,
+    setVoiceName,
+    preferredVoice,
     clearError: () => setError(null),
     startListening,
     stopListening,

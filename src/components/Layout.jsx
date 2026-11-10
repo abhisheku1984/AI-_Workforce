@@ -81,8 +81,14 @@ export function Layout({ children }) {
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:rounded focus:bg-white focus:px-3 focus:py-2 focus:text-sm">Skip to content</a>
 
       {/* sidebar */}
+      {/*
+        Positioning: an overlay drawer on small screens, and on desktop a *sticky* column
+        pinned to the viewport. `lg:static` let the sidebar scroll away with a long page —
+        so the navigation left the screen as soon as the user scrolled a table. Sticky plus
+        `self-start` (so the grid does not stretch it) keeps it in view for the whole scroll.
+      */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 bg-ink-900 text-white flex flex-col transition-[width,transform] duration-200 lg:static lg:translate-x-0 ${collapsed ? 'w-[68px]' : 'w-[248px]'} ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`fixed inset-y-0 left-0 z-40 h-screen bg-ink-900 text-white flex flex-col transition-[width,transform] duration-200 lg:sticky lg:top-0 lg:z-30 lg:h-screen lg:self-start lg:translate-x-0 ${collapsed ? 'w-[68px]' : 'w-[248px]'} ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
         <div className={`h-14 flex items-center border-b border-white/10 ${collapsed ? 'justify-center px-2' : 'px-4 gap-2.5'}`}>
           <div className="w-8 h-8 shrink-0 rounded-lg bg-brand-600 grid place-items-center font-bold text-sm">W</div>

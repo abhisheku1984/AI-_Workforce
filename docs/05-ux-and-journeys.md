@@ -253,3 +253,13 @@ Icon sizes are set as SVG attributes rather than utility classes. A utility clas
 exist in the design system compiles to no CSS at all, and an `<svg>` with no width falls back to
 its 300×150 default — which silently consumes the entire sidebar. Attributes cannot go missing
 in the same way.
+
+## Sidebar positioning
+
+The navigation is a **sticky** column on desktop: pinned to the viewport for the whole scroll,
+never scrolling away with the content. A `static` sidebar reflows with a long page, so the
+navigation disappears the moment a user scrolls a 300-row table — which is exactly when they
+want to switch sections. `sticky` + `top-0` + `self-start` (so the grid does not stretch it)
+gives a full-height panel that stays put. Its own menu list scrolls internally
+(`overflow-y-auto`) if the viewport is shorter than the item count, so collapsing is never the
+only way to reach the last item.

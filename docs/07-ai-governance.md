@@ -234,3 +234,42 @@ that browser's speech service. That is a property of the browser, not of this ap
 means "no data leaves this deployment" is true of the answer engine but **not** of the
 microphone. Organisations that cannot accept that should leave voice input unused; typed
 questions and spoken answers remain fully local to the browser.
+
+## Record-keeping actions
+
+The assistant can change records. That is a materially larger power than answering questions, so
+it is bounded deliberately.
+
+**Two steps, always.** A request is *staged* — validated, resolved and rendered as a preview of
+exactly what will change — before it can be applied. There is no code path that writes from a
+single request. A misheard voice instruction therefore produces a preview that the user reads
+and rejects, not a silently created record.
+
+**The same permissions, not new ones.** Each action declares the permission its REST endpoint
+requires (`allocation.manage`, `workforce.manage`). A user who cannot add an allocation in the
+interface cannot add one by asking, and a voice request cannot be used to escalate.
+
+**Ambiguity is surfaced, never guessed.** Two people with the same first name, or two active
+allocations on different projects, produce a question — not a coin flip.
+
+**Nothing here hard-deletes.** Removing an allocation sets it to `cancelled`; marking a person as
+exited sets `status = 'exited'` and keeps their history. Reports that depend on those rows
+continue to reconcile.
+
+**Excluded on purpose.** Pay, annual cost, charge-out rates, invoices and approvals are not
+reachable through the assistant at any permission level. A request for them is refused with an
+explanation, and the refusal is logged. The reasoning is asymmetric risk: a wrong allocation can
+be cancelled in one click, a wrong salary silently corrupts every downstream report.
+
+**Audited both ways.** Staging an action writes `ai.action.staged`; applying one writes the same
+event type the UI action would (`allocation.created`, `employee.updated`, …) plus
+`via_voice: true|false` and the before/after values. An auditor can reconstruct who asked, in
+what words, what was previewed, and what was applied.
+
+| Action | Permission | Destructive | Effect |
+| --- | --- | --- | --- |
+| Add an allocation | `allocation.manage` | No | Creates a planned allocation; warns aloud if it over-allocates the person |
+| Remove an allocation | `allocation.manage` | Yes | Sets `cancelled`, retains the row |
+| Add a person | `workforce.manage` | No | Creates the record with no cost fields |
+| Update a person | `workforce.manage` | No | Department, designation, email only |
+| Mark a person as exited | `workforce.manage` | Yes | Sets `status = 'exited'` and an exit date |

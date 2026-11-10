@@ -10,6 +10,7 @@ import { resolvePeriod } from '../lib/capacity.js';
 import { audit } from '../lib/audit.js';
 import { buildFactPack, scanForInjection } from '../services/grounding.js';
 import { aiConfigured, config } from '../config.js';
+import { applyAction, listActions, stageAction } from '../services/assistantActions.js';
 
 const router = express.Router();
 router.use(requireAuth, tenantContext, requireOrg);
@@ -116,6 +117,32 @@ router.post('/forecast', requirePermission('forecast.view'), ah(async (req, res)
 }));
 
 router.get('/forecast/history', requirePermission('forecast.view'), ah(async (req, res) => ok(res, listForecasts(req.user))));
+
+/* ------------------------------------------------------------------ assistant actions
+ *
+ * Two steps, deliberately. `/actions/stage` validates and returns a human-readable preview;
+ * `/actions/apply` performs it. Nothing changes on the strength of a single request, which is
+ * what makes a misheard voice instruction harmless.
+ */
+router.get('/assistant/actions', requirePermission('ai.assistant'), ah(async (_req, res) => ok(res, { actions: listActions() })));
+
+router.post('/assistant/actions/stage', requirePermission('ai.assistant'), ah(async (req, res) => {
+  const result = stageAction(req.user, req.body || {}, { via: req.body?.via === 'voice' ? 'voice' : 'text' });
+  // Staging is not audited as a change — nothing changed. It is logged for traceability.
+  audit(req, {
+    action: 'ai.action.staged', entityType: 'assistant_action',
+    summary: `Assistant staged ${req.body?.action || 'an action'} (${result.ok ? 'ready to confirm' : result.code})`,
+    meta: { action: req.body?.action, ok: result.ok, code: result.code ?? null, via: req.body?.via || 'text' },
+  });
+  return ok(res, result);
+}));
+
+router.post('/assistant/actions/apply', requirePermission('ai.assistant'), ah(async (req, res) => {
+  const { action, payload, via } = req.body || {};
+  if (!action || !payload) throw new ApiError(400, 'VALIDATION_FAILED', 'An action and its confirmed payload are required.');
+  const result = applyAction(req, { action, payload, via: via === 'voice' ? 'voice' : 'text' });
+  return ok(res, result);
+}));
 
 /* ------------------------------------------------------------------ AI governance */
 router.get('/governance', requirePermission('ai.assistant'), ah(async (req, res) => {

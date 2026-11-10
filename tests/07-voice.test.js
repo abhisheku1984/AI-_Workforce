@@ -139,3 +139,31 @@ test('Interface: icon sizing does not depend on a Tailwind class that does not e
     assert.match(layout, /lg:grid-cols-\[68px_1fr\]/, 'no collapsed grid width');
   });
 });
+
+test('Interface: the navigation is pinned to the viewport, not the document', async (t) => {
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+  const root = path.resolve(import.meta.dirname, '..');
+
+  await t.test('the sidebar uses sticky positioning on desktop', () => {
+    const layout = fs.readFileSync(path.join(root, 'src/components/Layout.jsx'), 'utf8');
+    assert.match(layout, /lg:sticky/, 'the sidebar must be sticky, or it scrolls away with long pages');
+    assert.match(layout, /lg:top-0/, 'a sticky element needs a top offset');
+    assert.match(layout, /lg:self-start/, 'without self-start the grid stretches the sidebar and sticky has no effect');
+    assert.doesNotMatch(layout, /lg:static lg:translate-x-0/, 'lg:static removes the sidebar from the scroll container');
+  });
+
+  await t.test('the sidebar still behaves as an overlay drawer on small screens', () => {
+    const layout = fs.readFileSync(path.join(root, 'src/components/Layout.jsx'), 'utf8');
+    assert.match(layout, /fixed inset-y-0 left-0/);
+    assert.match(layout, /-translate-x-full/);
+  });
+
+  await t.test('the built stylesheet actually contains the sticky rule', () => {
+    const dir = path.join(root, 'dist/assets');
+    if (!fs.existsSync(dir)) return; // no build in this checkout; the source check above stands
+    const css = fs.readdirSync(dir).filter((f) => f.endsWith('.css'))
+      .map((f) => fs.readFileSync(path.join(dir, f), 'utf8')).join('');
+    assert.match(css, /position:\s*sticky/, 'no sticky rule in the built CSS');
+  });
+});

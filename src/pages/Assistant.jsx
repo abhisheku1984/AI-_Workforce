@@ -4,6 +4,8 @@ import { PageHeader, Card, Loading, ErrorState, InfoNote, ConfidenceBadge, Badge
 import { api } from '../lib/api';
 import { fmtMonth } from '../lib/format';
 import { useVoice } from '../lib/useVoice';
+import { AssistantAvatar, AVATAR_STATE_LABEL } from '../components/AssistantAvatar';
+import { AssistantActions } from '../components/AssistantActions';
 
 export default function AssistantPage() {
   const { can } = useAuth();
@@ -18,6 +20,7 @@ export default function AssistantPage() {
   // The record of what has been asked. Every question is already stored server-side with its
   // answer, evidence and confidence; this surfaces it so a manager can revisit a decision.
   const history = useApi('/api/ai/assistant/conversations');
+  const actions = useApi('/api/ai/assistant/actions');
 
   // Voice: press to speak the question, hear the answer if the user asked for that.
   const voice = useVoice({
@@ -89,7 +92,7 @@ export default function AssistantPage() {
           description="Ask plain business questions about your own data. Every answer shows the period, filters, evidence, assumptions and limitations it used — and will say plainly when the data is not sufficient."
         />
 
-        <VoiceBar voice={voice} busy={busy} />
+        <VoiceBar voice={voice} busy={busy} avatarState={voice.listening ? 'listening' : voice.speaking ? 'speaking' : busy ? 'thinking' : 'idle'} />
 
         <Card bodyClass="p-0">
           <div className="h-[62vh] min-h-[420px] overflow-y-auto p-4 space-y-4" aria-live="polite">
@@ -209,6 +212,14 @@ export default function AssistantPage() {
           </ul>
         </Card>
 
+        <Card title="Keep records by asking" bodyClass="p-4">
+          <p className="text-[12px] text-ink-600 mb-3">
+            The assistant can add or remove allocations and people. Every change is previewed before it is applied,
+            and recorded in the audit trail. Pay and billing fields are never set this way.
+          </p>
+          <AssistantActions actions={actions.data?.actions || []} voice={voice} onApplied={() => { history.reload?.(); }} />
+        </Card>
+
         <Card title="How this works" bodyClass="p-4 space-y-2 text-[13px] text-ink-600">
           <p><strong>Grounding.</strong> Answers are computed from {governance.data?.external_provider_configured ? 'your authorised data only, and any external model receives aggregates rather than raw records' : 'your authorised data by a deterministic analytics engine — no external model is called'}.</p>
           <p><strong>Permissions.</strong> Cost and financial questions are refused if your role cannot see that data.</p>
@@ -256,11 +267,24 @@ export default function AssistantPage() {
  * Voice controls, stated plainly. If speech is unavailable the reason is shown, with the
  * fix, rather than a disabled button with no explanation.
  */
-function VoiceBar({ voice, busy }) {
-  const { availability, speakAnswers, setSpeakAnswers, speaking, error, clearError } = voice;
+function VoiceBar({ voice, busy, avatarState = 'idle' }) {
+  const { availability, speakAnswers, setSpeakAnswers, speaking, error, clearError,
+    voices = [], voiceName, setVoiceName, preferredVoice } = voice;
+  const [showVoices, setShowVoices] = useState(false);
+  const indian = voices.filter((v) => /^en[-_]IN$/i.test(v.lang));
+  const others = voices.filter((v) => !/^en[-_]IN$/i.test(v.lang));
   return (
-    <div className="mb-3 rounded-lg border border-ink-200 bg-white px-3 py-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px]">
-      <span className="font-medium text-ink-700">Voice</span>
+    <div className="mb-3 rounded-lg border border-ink-200 bg-white px-3 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px]">
+      <span className="flex items-center gap-2">
+        <AssistantAvatar state={avatarState} size={34} />
+        <span>
+          <span className="block font-semibold text-ink-800 leading-tight">Ask AI</span>
+          <span className="block text-[11px] text-ink-500 leading-tight">
+            {AVATAR_STATE_LABEL[avatarState]}
+            {preferredVoice && availability.output ? ` · ${preferredVoice.name}` : ''}
+          </span>
+        </span>
+      </span>
 
       {availability.input ? (
         <span className="text-ink-500">Press the microphone to ask out loud.</span>
@@ -283,6 +307,45 @@ function VoiceBar({ voice, busy }) {
         Read answers aloud
       </label>
 
+      {availability.output && (
+        <span className="relative">
+          <button type="button" className="link" onClick={() => setShowVoices((v) => !v)} aria-expanded={showVoices}>
+            {voiceName ? 'Change voice' : 'Choose voice'}
+          </button>
+          {showVoices && (
+            <div className="absolute left-0 top-6 z-30 w-64 card p-2 shadow-raised">
+              <p className="text-[10px] uppercase tracking-wide text-ink-400 px-1 pb-1">
+                {indian.length ? 'Indian English voices found' : 'No Indian English voice on this device'}
+              </p>
+              <button
+                type="button"
+                className="w-full text-left text-[11px] rounded px-2 py-1 hover:bg-ink-100"
+                onClick={() => { setVoiceName(''); setShowVoices(false); }}
+              >
+                Automatic {preferredVoice ? `(${preferredVoice.name})` : ''}
+              </button>
+              <div className="max-h-48 overflow-y-auto mt-1">
+                {[...indian, ...others].slice(0, 40).map((v) => (
+                  <button
+                    key={v.name}
+                    type="button"
+                    className={`w-full text-left text-[11px] rounded px-2 py-1 hover:bg-ink-100 ${voiceName === v.name ? 'bg-brand-50 text-brand-800' : ''}`}
+                    onClick={() => { setVoiceName(v.name); setShowVoices(false); voice.speak('This is how I will sound when I read your answers.'); }}
+                  >
+                    <span className="block truncate">{v.name}</span>
+                    <span className="block text-[10px] text-ink-400">{v.lang}{v.localService ? ' · on this device' : ''}</span>
+                  </button>
+                ))}
+              </div>
+              {!indian.length && (
+                <p className="text-[10px] text-ink-500 px-1 pt-1">
+                  Install an Indian English voice in Windows: Settings → Time &amp; language → Speech → Add voices.
+                </p>
+              )}
+            </div>
+          )}
+        </span>
+      )}
       {speaking && (
         <button type="button" className="link" onClick={voice.stopSpeaking}>Stop reading</button>
       )}
