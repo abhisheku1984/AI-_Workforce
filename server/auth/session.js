@@ -123,7 +123,7 @@ export function sessionCookie(token, expiresAt, { clear = false } = {}) {
     'HttpOnly',
     'SameSite=Lax',
   ];
-  if (config.isProd) parts.push('Secure');
+  if (config.secureCookies) parts.push('Secure');
   parts.push(clear ? 'Max-Age=0' : `Expires=${new Date(expiresAt).toUTCString()}`);
   return parts.join('; ');
 }

@@ -1,7 +1,8 @@
 import express from 'express';
 import { getDb, now } from '../db/index.js';
 import { hashPassword, verifyPassword, assertPasswordPolicy, randomToken } from '../auth/passwords.js';
-import { createSession, revokeSession, sessionCookie, SESSION_COOKIE, revokeAllUserSessions } from '../auth/session.js';
+import { createSession, revokeSession, sessionCookie, SESSION_COOKIE, revokeAllUserSessions, parseCookies } from '../auth/session.js';
+import { config } from '../config.js';
 import { requireAuth, ah } from '../auth/middleware.js';
 import { audit } from '../lib/audit.js';
 import { ApiError, ok } from '../lib/http.js';
@@ -63,8 +64,29 @@ router.post('/logout', ah(async (req, res) => {
   return ok(res, { signedOut: true });
 }));
 
+/** Headers that tell a diagnosing administrator (or the user) why a session did not stick. */
+function sessionDiagnostics(req) {
+  const cookies = parseCookies(req.headers.cookie || '');
+  return {
+    cookie_present: Boolean(cookies[SESSION_COOKIE]),
+    cookie_secure: config.secureCookies,
+    https_detected: req.secure || req.headers['x-forwarded-proto'] === 'https',
+  };
+}
+
 router.get('/me', ah(async (req, res) => {
-  if (!req.user) return ok(res, { user: null });
+  if (!req.user) {
+    // A session cookie that arrives but does not resolve means the session expired, was
+    // revoked, or the cookie belongs to a different deployment. Say so, rather than
+    // silently returning an anonymous principal and bouncing the user back to sign-in
+    // with no explanation.
+    const diag = sessionDiagnostics(req);
+    return ok(res, {
+      user: null,
+      reason: diag.cookie_present ? 'SESSION_NOT_RECOGNISED' : 'NO_SESSION_COOKIE',
+      diagnostics: diag,
+    });
+  }
   const p = req.user;
   const db = getDb();
   const notifications = db.prepare(`SELECT COUNT(*) c FROM notifications WHERE user_id = ? AND read_at IS NULL`).get(p.user.id).c;

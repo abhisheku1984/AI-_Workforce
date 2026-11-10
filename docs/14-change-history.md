@@ -30,7 +30,7 @@ This is the release record. It lists what was built in this release, and every d
 
 | Item | Result |
 | --- | --- |
-| Automated suites | 6 suites, 95 test cases, 96 recorded behaviours, **0 failures** |
+| Automated suites | 6 suites, 97 test cases, 98 recorded behaviours, **0 failures** |
 | Production build | Succeeds (Vite build, main bundle ~647 kB, ~192 kB gzipped) |
 | Served SPA | Root, hashed asset and a deep route all verified as served |
 | API walk-through | Health, sign-in, principal, dashboard, assistant, forecast, insights, reports exercised against the seeded demonstration database |
@@ -60,7 +60,8 @@ Each of these was found by running the product, not by reading it. They are list
 | 15 | Import commit result lacked created-row detail | The commit response could not say which rows were created | `created_detail[]` added to the result | A result that only counts is hard to audit |
 | 16 | **CSRF guard rejected legitimate sign-in behind a reverse proxy or preview tunnel** | The guard compared the request's `Origin` only against the `Host` header. When a proxy forwards `Host` as the upstream address while the browser sends the public host as `Origin`, every state-changing request — sign-in included — returned `403 CROSS_SITE_BLOCKED` before authentication ran. The user saw only "Cross-site requests are not permitted", and the audit trail recorded nothing because the request never reached the login handler. | The comparison now accepts a request when the browser states `Sec-Fetch-Site: same-origin`, or when `Origin` matches `Host`, `X-Forwarded-Host`, or a configured `PUBLIC_HOST` allow-list. A genuinely foreign `Origin` is still refused, and a request carrying neither signal is still refused. Two tests pin both halves. | A security control written without the deployment topology in view can lock out every legitimate user while looking perfectly strict. When a user says "I cannot log in", check what the audit trail does *not* say. |
 | 17 | **Development server proxy broke its own host check** | `changeOrigin` was `false`, so the Vite dev server forwarded the browser's tunnel host to the API; Vite's host check then treated the hop as cross-origin and sign-in failed under `npm run dev` at any non-localhost host. | `changeOrigin: true` with `xfwd` and an explicit `X-Forwarded-Host`, which also feeds the API's proxy-aware CSRF check. | Reverse-proxy configuration is part of the product, not an environment detail. |
-
+| 18 | **Frame-blocking header made sign-in impossible in an embedded preview** | Helmet's default `X-Frame-Options: SAMEORIGIN` was sent on every response, including the SPA. Inside the preview frame the browser refuses to treat the framed page as the same origin as the top-level page, so the session cookie set by the sign-in call was never sent on the next request. Sign-in succeeded server-side and the app bounced straight back to the sign-in page with no message. | Framing is now a configuration decision: `ALLOW_FRAME_EMBEDDING` defaults to allowed outside production and blocked in production. Verified that no `X-Frame-Options` and no `frame-ancestors 'none'` reach the SPA when embedding is allowed. | The evidence was in the database, not the browser: every browser sign-in created a session whose `last_seen_at` never advanced, meaning the cookie never came back. A test that only checks the login HTTP status will never see this class of defect — the failure is one request later. |
+| 19 | **A session that did not resolve was reported as "not signed in"** | `GET /api/auth/me` returned `{user: null}` for both "never signed in" and "signed in but the cookie did not stick", so the interface silently redirected and the user had no diagnosis. | The endpoint now returns `reason` (`NO_SESSION_COOKIE` or `SESSION_NOT_RECOGNISED`) plus diagnostics (cookie present, cookie secure, HTTPS detected), and the sign-in page states plainly that the session did not stick and which configuration causes it. | An authentication failure that looks identical to "you are not signed in yet" is a support cost with no diagnostic value. |
 ### 4. Corrections to test expectations (not product defects)
 
 Recorded so the distinction between "the product was wrong" and "the test was wrong" is preserved:
@@ -101,7 +102,7 @@ These appear in `docs/13-roadmap.md` with the evidence that would justify each o
 npm ci                       # install
 npm run build                # compile the interface
 npm start                    # run the product (needs SESSION_SECRET in production mode)
-npm test                     # six suites, 95 cases
+npm test                     # six suites, 97 cases
 npm run test:report          # regenerate docs/test-report.md from a real run
 npm run seed                 # create the demonstration tenants (development only)
 ```

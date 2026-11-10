@@ -3,14 +3,19 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [state, setState] = useState({ loading: true, user: null, permissions: [], org: null, roles: [], modules: [], scopes: null, isPlatformAdmin: false, notifications: 0 });
+  const [state, setState] = useState({ loading: true, user: null, permissions: [], org: null, roles: [], modules: [], scopes: null, isPlatformAdmin: false, notifications: 0, authIssue: null, diagnostics: null });
 
   const refresh = useCallback(async () => {
     const res = await fetch('/api/auth/me', { credentials: 'same-origin' });
     if (!res.ok) { setState((s) => ({ ...s, loading: false, user: null })); return null; }
     const { data } = await res.json();
     if (!data.user) {
-      setState({ loading: false, user: null, permissions: [], org: null, roles: [], modules: [], scopes: null, isPlatformAdmin: false, notifications: 0 });
+      // Distinguish "never signed in" from "signed in but the session did not stick".
+      // Without this the app silently bounces to the sign-in page and the user has no idea why.
+      setState((s) => ({
+        ...s, loading: false, user: null, authIssue: data.reason || null,
+        diagnostics: data.diagnostics || null,
+      }));
       return null;
     }
     setState({

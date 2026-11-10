@@ -91,6 +91,8 @@ sudo -u workforceiq npm start
 | `MAX_UPLOAD_MB` | 20 | Upload size cap |
 | `TRUST_PROXY` | false | Set `true` behind a reverse proxy so client IPs are recorded correctly |
 | `PUBLIC_HOST` | empty | Comma-separated public hostnames (for example `workforce.example.com`). The cross-site request check accepts an `Origin` matching one of these. Required whenever a proxy forwards neither `X-Forwarded-Host` nor the browser's `Sec-Fetch-Site` header (some tunnels and older proxies do not). Set it to the exact host users type into the address bar. |
+| `ALLOW_FRAME_EMBEDDING` | `true` outside production, `false` in production | Whether the app may be rendered inside an iframe. Production defaults to blocked (clickjacking protection). Set `true` for deployments that are embedded in a portal or preview frame — with framing blocked, sign-in succeeds server-side but the framed page cannot keep the session, which looks like "I cannot log in". |
+| `INSECURE_COOKIES` | empty | Set `true` only for a deliberate plain-HTTP deployment. By default the session cookie is marked `Secure` in production, and a browser silently drops a `Secure` cookie on plain HTTP. |
 | `AI_PROVIDER` | `local` | `local` (default) or an OpenAI-compatible provider name |
 | `AI_MODEL`, `AI_BASE_URL`, `AI_API_KEY` | empty | Only needed if you deliberately enable an external model |
 | `AI_ALLOW_EMPLOYEE_NAMES` | false | Sends names to an external model — off unless a customer explicitly accepts it |
@@ -402,6 +404,7 @@ Suggested external uptime check: HTTP GET `/api/health`, expecting 200, every 5 
 | `better-sqlite3` fails to install | No compiler on the host | `apt-get install -y build-essential python3` then reinstall |
 | Sign-in works but the screen is blank | `dist/` not built or stale | `npm run build` and restart |
 | **Sign-in returns `403 CROSS_SITE_BLOCKED`** | The public host the browser used is not visible to the API: an unset `PUBLIC_HOST`, a proxy that strips `X-Forwarded-Host`, or a client that sends neither `Sec-Fetch-Site` nor a matching `Origin` | Set `PUBLIC_HOST=<the exact public hostname>` in `.env` and restart. Verify with `curl -H "Origin: https://<host>" -X POST .../api/auth/login`. This is a configuration error, not a credential problem — the audit trail will show no login attempt at all. |
+| **Sign-in appears to work but returns to the sign-in page** | The session cookie was accepted by the server but not sent back by the browser — usually a framing restriction, a `Secure` cookie on plain HTTP, or the app and API on different addresses | Check `GET /api/auth/me`: it returns `reason: NO_SESSION_COOKIE` or `SESSION_NOT_RECOGNISED` with diagnostics. Set `ALLOW_FRAME_EMBEDDING=true` if the app is framed; set `INSECURE_COOKIES=true` only if you genuinely serve plain HTTP; otherwise serve over TLS. |
 
 ---
 

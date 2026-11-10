@@ -234,6 +234,30 @@ test('Automation, approvals, reports and operations', async (t) => {
     record('Security', 'Sign-in works behind a reverse proxy or preview tunnel', true);
   });
 
+  await t.test('the app can be embedded in a frame where configured, blocked where not', async () => {
+    const res = await fetch(`${baseUrl}/`);
+    // Tests run with NODE_ENV=test, so embedding is allowed by default (preview/portal use).
+    assert.equal(res.headers.get('x-frame-options'), null);
+    const policy = res.headers.get('content-security-policy') || '';
+    assert.ok(!/frame-ancestors\s+'none'/.test(policy), 'no frame-ancestors:none when embedding is allowed');
+    record('Operations', 'Frame embedding follows configuration, not a fixed header', true);
+  });
+
+  await t.test('a session cookie that does not resolve is reported, not silently ignored', async () => {
+    const res = await fetch(`${baseUrl}/api/auth/me`, {
+      headers: { cookie: 'wiq_session=not-a-real-session-token' },
+    });
+    const body = await res.json();
+    assert.equal(body.data.user, null);
+    assert.equal(body.data.reason, 'SESSION_NOT_RECOGNISED');
+    assert.equal(body.data.diagnostics.cookie_present, true);
+
+    const none = await fetch(`${baseUrl}/api/auth/me`);
+    const noneBody = await none.json();
+    assert.equal(noneBody.data.reason, 'NO_SESSION_COOKIE');
+    record('Authentication', 'Missing or unrecognised session is explained to the user', true);
+  });
+
   await t.test('no secrets are committed to the repository', async () => {
     const files = [
       'server/config.js', 'server/index.js', 'server/auth/session.js', 'server/auth/passwords.js',

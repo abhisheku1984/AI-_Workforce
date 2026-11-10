@@ -295,4 +295,5 @@ So you are not surprised in front of a customer:
 | A figure disagrees with my spreadsheet | Download the report and compare the definitions; if the definition matches and the data differs, the import is usually the cause |
 | I need a permission I do not have | Ask your organisation administrator — permissions are per-organisation and cannot be self-granted |
 | Sign-in is refused with "Cross-site requests are not permitted" | This is a deployment configuration issue, not your password. Whoever runs the installation needs to set `PUBLIC_HOST` or forward `X-Forwarded-Host` — see the deployment guide |
+| Sign-in is accepted but you land back on the sign-in page | The browser did not keep the session. The sign-in page now explains this and names the cause; whoever runs the installation sets `ALLOW_FRAME_EMBEDDING` or serves the app over the address the user is on. It is never a wrong password. |
 | I think I found a security problem | Report it to the person who runs your installation immediately, and stop using the affected feature |

@@ -1,6 +1,6 @@
 # WorkforceIQ — Test Plan and Test Report
 
-**Report generated:** 2026-11-10 12:43:17 UTC
+**Report generated:** 2026-11-10 12:53:41 UTC
 
 > This report is produced by `npm run test:report`, which executes the real test suites
 > against a real (temporary) database and a real HTTP server. Every number below comes
@@ -23,9 +23,9 @@
 | Metric | Result |
 | --- | --- |
 | Test suites executed | 6 |
-| Node test cases passed | 95 |
+| Node test cases passed | 97 |
 | Node test cases failed | 0 |
-| Recorded assertion groups | 96 |
+| Recorded assertion groups | 98 |
 | Assertion groups failed | 0 |
 | Overall verdict | **Pass** |
 
@@ -37,12 +37,12 @@ recorded only when all of its assertions inside it pass.
 
 | Suite | Node cases passed | Node cases failed | Duration (ms) | Verdict |
 | --- | --- | --- | --- | --- |
-| `tests/01-auth.test.js` | 10 | 0 | 1394 | Pass |
-| `tests/02-tenancy.test.js` | 12 | 0 | 1179 | Pass |
-| `tests/03-analytics.test.js` | 14 | 0 | 753 | Pass |
-| `tests/04-ingestion.test.js` | 17 | 0 | 845 | Pass |
-| `tests/05-ai.test.js` | 17 | 0 | 1016 | Pass |
-| `tests/06-governance.test.js` | 25 | 0 | 1180 | Pass |
+| `tests/01-auth.test.js` | 10 | 0 | 1484 | Pass |
+| `tests/02-tenancy.test.js` | 12 | 0 | 1176 | Pass |
+| `tests/03-analytics.test.js` | 14 | 0 | 799 | Pass |
+| `tests/04-ingestion.test.js` | 17 | 0 | 923 | Pass |
+| `tests/05-ai.test.js` | 17 | 0 | 1001 | Pass |
+| `tests/06-governance.test.js` | 27 | 0 | 1152 | Pass |
 
 ## 4. What each suite proves
 
@@ -179,6 +179,8 @@ Governance and operations: sensitive automations stop for human approval, approv
 | Cross-origin state-changing request rejected | Pass |
 | Foreign origin still rejected after proxy-safe comparison | Pass |
 | Sign-in works behind a reverse proxy or preview tunnel | Pass |
+| Frame embedding follows configuration, not a fixed header | Pass |
+| Missing or unrecognised session is explained to the user | Pass |
 | No hardcoded credentials or API keys in server source | Pass |
 | Dashboard returns KPI totals, trend, definitions and freshness | Pass |
 | Structure endpoints validate input ranges | Pass |
@@ -223,61 +225,61 @@ TAP version 13
     # Subtest: valid credentials create a session and return the principal
     ok 1 - valid credentials create a session and return the principal
       ---
-      duration_ms: 79.099338
+      duration_ms: 101.530128
       type: 'test'
       ...
     # Subtest: wrong password is rejected with a generic message
     ok 2 - wrong password is rejected with a generic message
       ---
-      duration_ms: 44.936126
+      duration_ms: 49.814552
       type: 'test'
       ...
     # Subtest: unknown email returns the same error (no account enumeration)
     ok 3 - unknown email returns the same error (no account enumeration)
       ---
-      duration_ms: 41.207983
+      duration_ms: 46.571196
       type: 'test'
       ...
     # Subtest: unauthenticated API access is refused
     ok 4 - unauthenticated API access is refused
       ---
-      duration_ms: 7.366175
+      duration_ms: 8.552456
       type: 'test'
       ...
     # Subtest: session cookie is HttpOnly and SameSite
     ok 5 - session cookie is HttpOnly and SameSite
       ---
-      duration_ms: 42.733425
+      duration_ms: 35.933953
       type: 'test'
       ...
     # Subtest: logout revokes the session server-side
     ok 6 - logout revokes the session server-side
       ---
-      duration_ms: 50.606547
+      duration_ms: 46.447842
       type: 'test'
       ...
     # Subtest: account is temporarily locked after repeated failures
     ok 7 - account is temporarily locked after repeated failures
       ---
-      duration_ms: 265.707413
+      duration_ms: 271.960202
       type: 'test'
       ...
     # Subtest: weak password change is rejected
     ok 8 - weak password change is rejected
       ---
-      duration_ms: 75.859734
+      duration_ms: 75.861191
       type: 'test'
       ...
     # Subtest: password change revokes other sessions
     ok 9 - password change revokes other sessions
       ---
-      duration_ms: 259.038518
+      duration_ms: 261.240674
       type: 'test'
       ...
     1..9
 ok 1 - Authentication
   ---
-  duration_ms: 868.918426
+  duration_ms: 900.569933
   type: 'test'
   ...
 1..1
@@ -288,7 +290,7 @@ ok 1 - Authentication
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 1364.450342
+# duration_ms 1448.341789
 ```
 
 ### 02-tenancy.test.js
@@ -300,73 +302,73 @@ TAP version 13
     # Subtest: a tenant cannot read another tenant's employees
     ok 1 - a tenant cannot read another tenant's employees
       ---
-      duration_ms: 76.764209
+      duration_ms: 87.622441
       type: 'test'
       ...
     # Subtest: workforce lists never include another tenant's records
     ok 2 - workforce lists never include another tenant's records
       ---
-      duration_ms: 92.050708
+      duration_ms: 100.316638
       type: 'test'
       ...
     # Subtest: creating a record cannot reference another tenant structure
     ok 3 - creating a record cannot reference another tenant structure
       ---
-      duration_ms: 44.265926
+      duration_ms: 37.550484
       type: 'test'
       ...
     # Subtest: organization header cannot be spoofed by a normal user
     ok 4 - organization header cannot be spoofed by a normal user
       ---
-      duration_ms: 47.456427
+      duration_ms: 42.35764
       type: 'test'
       ...
     # Subtest: department-scoped user sees only their department
     ok 5 - department-scoped user sees only their department
       ---
-      duration_ms: 45.192498
+      duration_ms: 46.854834
       type: 'test'
       ...
     # Subtest: scoped totals exclude out-of-scope capacity
     ok 6 - scoped totals exclude out-of-scope capacity
       ---
-      duration_ms: 41.861871
+      duration_ms: 37.530055
       type: 'test'
       ...
     # Subtest: cost fields are stripped for roles without cost permission
     ok 7 - cost fields are stripped for roles without cost permission
       ---
-      duration_ms: 43.821257
+      duration_ms: 44.416284
       type: 'test'
       ...
     # Subtest: viewer cannot write, cannot regenerate insights, cannot import
     ok 8 - viewer cannot write, cannot regenerate insights, cannot import
       ---
-      duration_ms: 49.492908
+      duration_ms: 58.722659
       type: 'test'
       ...
     # Subtest: viewer cannot see financial analytics
     ok 9 - viewer cannot see financial analytics
       ---
-      duration_ms: 41.945029
+      duration_ms: 46.603521
       type: 'test'
       ...
     # Subtest: user cannot escalate their own role
     ok 10 - user cannot escalate their own role
       ---
-      duration_ms: 51.264366
+      duration_ms: 50.667067
       type: 'test'
       ...
     # Subtest: self-approval of a request is blocked
     ok 11 - self-approval of a request is blocked
       ---
-      duration_ms: 53.004798
+      duration_ms: 54.405758
       type: 'test'
       ...
     1..11
 ok 1 - Tenant isolation and data scope
   ---
-  duration_ms: 589.685023
+  duration_ms: 609.679428
   type: 'test'
   ...
 1..1
@@ -377,7 +379,7 @@ ok 1 - Tenant isolation and data scope
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 1149.453188
+# duration_ms 1146.865249
 ```
 
 ### 03-analytics.test.js
@@ -389,85 +391,85 @@ TAP version 13
     # Subtest: available hours match the documented formula
     ok 1 - available hours match the documented formula
       ---
-      duration_ms: 12.82047
+      duration_ms: 15.149684
       type: 'test'
       ...
     # Subtest: exited employee is excluded from the period
     ok 2 - exited employee is excluded from the period
       ---
-      duration_ms: 7.492517
+      duration_ms: 6.698963
       type: 'test'
       ...
     # Subtest: allocated hours sum overlapping allocations
     ok 3 - allocated hours sum overlapping allocations
       ---
-      duration_ms: 6.502345
+      duration_ms: 6.319329
       type: 'test'
       ...
     # Subtest: utilization comes from timesheets and is null (not zero) without data
     ok 4 - utilization comes from timesheets and is null (not zero) without data
       ---
-      duration_ms: 5.277741
+      duration_ms: 6.69167
       type: 'test'
       ...
     # Subtest: unallocated and over-allocated hours reconcile
     ok 5 - unallocated and over-allocated hours reconcile
       ---
-      duration_ms: 10.4641
+      duration_ms: 9.781038
       type: 'test'
       ...
     # Subtest: filters change results consistently
     ok 6 - filters change results consistently
       ---
-      duration_ms: 5.073063
+      duration_ms: 4.816393
       type: 'test'
       ...
     # Subtest: period boundaries are respected
     ok 7 - period boundaries are respected
       ---
-      duration_ms: 4.456365
+      duration_ms: 4.552762
       type: 'test'
       ...
     # Subtest: trend returns one point per month
     ok 8 - trend returns one point per month
       ---
-      duration_ms: 6.669488
+      duration_ms: 7.877454
       type: 'test'
       ...
     # Subtest: demand coverage identifies the uncovered requirement
     ok 9 - demand coverage identifies the uncovered requirement
       ---
-      duration_ms: 4.828844
+      duration_ms: 6.16407
       type: 'test'
       ...
     # Subtest: overlapping allocations are detected
     ok 10 - overlapping allocations are detected
       ---
-      duration_ms: 3.460853
+      duration_ms: 3.849842
       type: 'test'
       ...
     # Subtest: financial analysis states availability and computes margin only with full inputs
     ok 11 - financial analysis states availability and computes margin only with full inputs
       ---
-      duration_ms: 5.768578
+      duration_ms: 6.282126
       type: 'test'
       ...
     # Subtest: insufficient cost data is disclosed rather than estimated
     ok 12 - insufficient cost data is disclosed rather than estimated
       ---
-      duration_ms: 42.439705
+      duration_ms: 41.644311
       type: 'test'
       ...
     # Subtest: metric definitions are exposed for audit
     ok 13 - metric definitions are exposed for audit
       ---
-      duration_ms: 3.832301
+      duration_ms: 4.457242
       type: 'test'
       ...
     1..13
 ok 1 - Utilization and capacity calculations
   ---
-  duration_ms: 191.276694
+  duration_ms: 209.98065
   type: 'test'
   ...
 1..1
@@ -478,7 +480,7 @@ ok 1 - Utilization and capacity calculations
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 720.784354
+# duration_ms 768.603741
 ```
 
 ### 04-ingestion.test.js
@@ -490,103 +492,103 @@ TAP version 13
     # Subtest: column mapping suggestion matches known header aliases
     ok 1 - column mapping suggestion matches known header aliases
       ---
-      duration_ms: 1.607276
+      duration_ms: 1.416916
       type: 'test'
       ...
     # Subtest: format parsing handles common spreadsheet variations
     ok 2 - format parsing handles common spreadsheet variations
       ---
-      duration_ms: 0.991224
+      duration_ms: 1.052557
       type: 'test'
       ...
     # Subtest: row validation flags errors and records safe fixes
     ok 3 - row validation flags errors and records safe fixes
       ---
-      duration_ms: 1.233647
+      duration_ms: 1.147435
       type: 'test'
       ...
     # Subtest: valid CSV uploads, maps, validates and commits
     ok 4 - valid CSV uploads, maps, validates and commits
       ---
-      duration_ms: 55.533341
+      duration_ms: 60.696257
       type: 'test'
       ...
     # Subtest: invalid rows are reported and never invented
     ok 5 - invalid rows are reported and never invented
       ---
-      duration_ms: 32.84501
+      duration_ms: 32.283248
       type: 'test'
       ...
     # Subtest: duplicate rows inside a file are detected and skipped
     ok 6 - duplicate rows inside a file are detected and skipped
       ---
-      duration_ms: 21.448749
+      duration_ms: 20.973576
       type: 'test'
       ...
     # Subtest: re-uploading existing records updates rather than duplicates
     ok 7 - re-uploading existing records updates rather than duplicates
       ---
-      duration_ms: 20.950936
+      duration_ms: 21.113451
       type: 'test'
       ...
     # Subtest: unsupported file types are rejected
     ok 8 - unsupported file types are rejected
       ---
-      duration_ms: 10.684308
+      duration_ms: 10.045451
       type: 'test'
       ...
     # Subtest: a file with a .xlsx extension but non-xlsx content is rejected
     ok 9 - a file with a .xlsx extension but non-xlsx content is rejected
       ---
-      duration_ms: 5.289891
+      duration_ms: 5.189722
       type: 'test'
       ...
     # Subtest: empty file is rejected with a clear message
     ok 10 - empty file is rejected with a clear message
       ---
-      duration_ms: 4.229014
+      duration_ms: 4.330745
       type: 'test'
       ...
     # Subtest: missing required mapping is refused
     ok 11 - missing required mapping is refused
       ---
-      duration_ms: 8.011783
+      duration_ms: 10.388917
       type: 'test'
       ...
     # Subtest: committing an unvalidated import is refused
     ok 12 - committing an unvalidated import is refused
       ---
-      duration_ms: 6.375472
+      duration_ms: 8.524123
       type: 'test'
       ...
     # Subtest: a failed import leaves existing data intact (transactional)
     ok 13 - a failed import leaves existing data intact (transactional)
       ---
-      duration_ms: 21.533285
+      duration_ms: 26.362955
       type: 'test'
       ...
     # Subtest: duplicate file checksum is detected
     ok 14 - duplicate file checksum is detected
       ---
-      duration_ms: 8.897005
+      duration_ms: 10.494704
       type: 'test'
       ...
     # Subtest: CSV injection payloads are neutralised on export
     ok 15 - CSV injection payloads are neutralised on export
       ---
-      duration_ms: 0.680408
+      duration_ms: 1.016442
       type: 'test'
       ...
     # Subtest: import history and error report are available
     ok 16 - import history and error report are available
       ---
-      duration_ms: 8.001328
+      duration_ms: 9.759719
       type: 'test'
       ...
     1..16
 ok 1 - Data ingestion pipeline
   ---
-  duration_ms: 287.853504
+  duration_ms: 304.380675
   type: 'test'
   ...
 1..1
@@ -597,7 +599,7 @@ ok 1 - Data ingestion pipeline
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 815.729631
+# duration_ms 893.588063
 ```
 
 ### 05-ai.test.js
@@ -609,103 +611,103 @@ TAP version 13
     # Subtest: answers are grounded in the requesting user's own data
     ok 1 - answers are grounded in the requesting user's own data
       ---
-      duration_ms: 38.021467
+      duration_ms: 38.178569
       type: 'test'
       ...
     # Subtest: reported figures match the analytics service exactly
     ok 2 - reported figures match the analytics service exactly
       ---
-      duration_ms: 22.936156
+      duration_ms: 18.193976
       type: 'test'
       ...
     # Subtest: a question that cannot be answered returns insufficient data, not a guess
     ok 3 - a question that cannot be answered returns insufficient data, not a guess
       ---
-      duration_ms: 10.833573
+      duration_ms: 12.045854
       type: 'test'
       ...
     # Subtest: prompt injection in the question is blocked and logged
     ok 4 - prompt injection in the question is blocked and logged
       ---
-      duration_ms: 4.419867
+      duration_ms: 4.693896
       type: 'test'
       ...
     # Subtest: injection patterns are recognised in uploaded/external text
     ok 5 - injection patterns are recognised in uploaded/external text
       ---
-      duration_ms: 0.441918
+      duration_ms: 0.542499
       type: 'test'
       ...
     # Subtest: assistant is unavailable to roles without the assistant permission
     ok 6 - assistant is unavailable to roles without the assistant permission
       ---
-      duration_ms: 44.528702
+      duration_ms: 46.141435
       type: 'test'
       ...
     # Subtest: assistant refuses financial questions without finance permission
     ok 7 - assistant refuses financial questions without finance permission
       ---
-      duration_ms: 57.481156
+      duration_ms: 58.914157
       type: 'test'
       ...
     # Subtest: cost data is absent from the fact pack for users without cost permission
     ok 8 - cost data is absent from the fact pack for users without cost permission
       ---
-      duration_ms: 54.324532
+      duration_ms: 46.07037
       type: 'test'
       ...
     # Subtest: fact pack never contains another tenant's organisation name
     ok 9 - fact pack never contains another tenant's organisation name
       ---
-      duration_ms: 10.079977
+      duration_ms: 7.791285
       type: 'test'
       ...
     # Subtest: no external model is called in the default configuration
     ok 10 - no external model is called in the default configuration
       ---
-      duration_ms: 13.562916
+      duration_ms: 7.539631
       type: 'test'
       ...
     # Subtest: employee names can be withheld before any model call
     ok 11 - employee names can be withheld before any model call
       ---
-      duration_ms: 11.176641
+      duration_ms: 9.254601
       type: 'test'
       ...
     # Subtest: model output with invented figures is rejected
     ok 12 - model output with invented figures is rejected
       ---
-      duration_ms: 0.736798
+      duration_ms: 0.643589
       type: 'test'
       ...
     # Subtest: insight generation produces evidence-backed records with stated limits
     ok 13 - insight generation produces evidence-backed records with stated limits
       ---
-      duration_ms: 15.121568
+      duration_ms: 17.355557
       type: 'test'
       ...
     # Subtest: an insight can be reviewed and the decision is audited
     ok 14 - an insight can be reviewed and the decision is audited
       ---
-      duration_ms: 9.878506
+      duration_ms: 19.362868
       type: 'test'
       ...
     # Subtest: forecast is refused without enough history
     ok 15 - forecast is refused without enough history
       ---
-      duration_ms: 65.546746
+      duration_ms: 50.999346
       type: 'test'
       ...
     # Subtest: forecast is produced with adequate history and labelled as an estimate
     ok 16 - forecast is produced with adequate history and labelled as an estimate
       ---
-      duration_ms: 11.779265
+      duration_ms: 11.395761
       type: 'test'
       ...
     1..16
 ok 1 - AI assistant grounding and safety
   ---
-  duration_ms: 449.268099
+  duration_ms: 431.472687
   type: 'test'
   ...
 1..1
@@ -716,7 +718,7 @@ ok 1 - AI assistant grounding and safety
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 982.528225
+# duration_ms 969.363431
 ```
 
 ### 06-governance.test.js
@@ -728,161 +730,173 @@ TAP version 13
     # Subtest: sensitive automation creates an approval request instead of executing
     ok 1 - sensitive automation creates an approval request instead of executing
       ---
-      duration_ms: 22.380452
+      duration_ms: 17.651962
       type: 'test'
       ...
     # Subtest: a second approver can approve and the action then executes
     ok 2 - a second approver can approve and the action then executes
       ---
-      duration_ms: 123.439029
+      duration_ms: 104.565189
       type: 'test'
       ...
     # Subtest: disabled rules cannot be run
     ok 3 - disabled rules cannot be run
       ---
-      duration_ms: 7.073774
+      duration_ms: 5.549995
       type: 'test'
       ...
     # Subtest: automation cannot be created with an unsupported action
     ok 4 - automation cannot be created with an unsupported action
       ---
-      duration_ms: 3.396905
+      duration_ms: 2.732714
       type: 'test'
       ...
     # Subtest: report generation writes a file with lineage metadata
     ok 5 - report generation writes a file with lineage metadata
       ---
-      duration_ms: 11.804674
+      duration_ms: 9.200052
       type: 'test'
       ...
     # Subtest: Excel report is a valid xlsx file
     ok 6 - Excel report is a valid xlsx file
       ---
-      duration_ms: 17.300657
+      duration_ms: 13.49298
       type: 'test'
       ...
     # Subtest: cost report is refused without finance permission
     ok 7 - cost report is refused without finance permission
       ---
-      duration_ms: 42.059909
+      duration_ms: 32.78492
       type: 'test'
       ...
     # Subtest: report files cannot be downloaded by another tenant
     ok 8 - report files cannot be downloaded by another tenant
       ---
-      duration_ms: 41.51298
+      duration_ms: 43.897976
       type: 'test'
       ...
     # Subtest: path traversal on report download is rejected
     ok 9 - path traversal on report download is rejected
       ---
-      duration_ms: 2.773827
+      duration_ms: 2.845712
       type: 'test'
       ...
     # Subtest: audit trail records authentication, approvals, automation and report generation
     ok 10 - audit trail records authentication, approvals, automation and report generation
       ---
-      duration_ms: 6.529572
+      duration_ms: 5.132372
       type: 'test'
       ...
     # Subtest: audit trail is not visible to roles without audit permission
     ok 11 - audit trail is not visible to roles without audit permission
       ---
-      duration_ms: 40.551653
+      duration_ms: 42.291214
       type: 'test'
       ...
     # Subtest: full tenant data export contains only that tenant
     ok 12 - full tenant data export contains only that tenant
       ---
-      duration_ms: 6.982417
+      duration_ms: 6.49204
       type: 'test'
       ...
     # Subtest: deletion requires a second administrator
     ok 13 - deletion requires a second administrator
       ---
-      duration_ms: 5.692983
+      duration_ms: 5.590713
       type: 'test'
       ...
     # Subtest: health endpoint reports database status
     ok 14 - health endpoint reports database status
       ---
-      duration_ms: 2.283071
+      duration_ms: 2.219252
       type: 'test'
       ...
     # Subtest: unknown API routes return a structured 404
     ok 15 - unknown API routes return a structured 404
       ---
-      duration_ms: 2.47644
+      duration_ms: 2.255432
       type: 'test'
       ...
     # Subtest: internal errors do not leak stack traces
     ok 16 - internal errors do not leak stack traces
       ---
-      duration_ms: 43.202253
+      duration_ms: 50.842974
       type: 'test'
       ...
     # Subtest: security headers are present
     ok 17 - security headers are present
       ---
-      duration_ms: 1.932914
+      duration_ms: 1.961034
       type: 'test'
       ...
     # Subtest: cross-site state-changing request is blocked when Origin differs
     ok 18 - cross-site state-changing request is blocked when Origin differs
       ---
-      duration_ms: 2.538122
+      duration_ms: 2.813365
       type: 'test'
       ...
     # Subtest: cross-site protection still blocks a genuinely foreign origin
     ok 19 - cross-site protection still blocks a genuinely foreign origin
       ---
-      duration_ms: 4.740419
+      duration_ms: 4.751217
       type: 'test'
       ...
     # Subtest: a request behind a reverse proxy is not mistaken for a cross-site request
     ok 20 - a request behind a reverse proxy is not mistaken for a cross-site request
       ---
-      duration_ms: 77.031972
+      duration_ms: 89.971357
+      type: 'test'
+      ...
+    # Subtest: the app can be embedded in a frame where configured, blocked where not
+    ok 21 - the app can be embedded in a frame where configured, blocked where not
+      ---
+      duration_ms: 4.682351
+      type: 'test'
+      ...
+    # Subtest: a session cookie that does not resolve is reported, not silently ignored
+    ok 22 - a session cookie that does not resolve is reported, not silently ignored
+      ---
+      duration_ms: 4.686074
       type: 'test'
       ...
     # Subtest: no secrets are committed to the repository
-    ok 21 - no secrets are committed to the repository
+    ok 23 - no secrets are committed to the repository
       ---
-      duration_ms: 0.532596
+      duration_ms: 0.707568
       type: 'test'
       ...
     # Subtest: dashboard payload is complete and internally consistent
-    ok 22 - dashboard payload is complete and internally consistent
+    ok 24 - dashboard payload is complete and internally consistent
       ---
-      duration_ms: 11.103839
+      duration_ms: 23.628965
       type: 'test'
       ...
     # Subtest: structure creation validates input
-    ok 23 - structure creation validates input
+    ok 25 - structure creation validates input
       ---
-      duration_ms: 13.761714
+      duration_ms: 5.477637
       type: 'test'
       ...
     # Subtest: role permission changes take effect immediately
-    ok 24 - role permission changes take effect immediately
+    ok 26 - role permission changes take effect immediately
       ---
-      duration_ms: 43.679176
+      duration_ms: 47.691178
       type: 'test'
       ...
-    1..24
+    1..26
 ok 1 - Automation, approvals, reports and operations
   ---
-  duration_ms: 622.441215
+  duration_ms: 610.896307
   type: 'test'
   ...
 1..1
-# tests 25
+# tests 27
 # suites 0
-# pass 25
+# pass 27
 # fail 0
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 1147.402769
+# duration_ms 1120.179799
 ```
 

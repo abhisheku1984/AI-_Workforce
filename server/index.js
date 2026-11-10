@@ -28,8 +28,10 @@ app.disable('x-powered-by');
 if (config.trustProxy) app.set('trust proxy', 1);
 
 app.use(helmet({
-  contentSecurityPolicy: false, // set by the static host for the SPA; API serves JSON only
+  contentSecurityPolicy: false, // set by the reverse proxy for the SPA; the API serves JSON only
   crossOriginResourcePolicy: { policy: 'same-site' },
+  // Framing is a deployment decision, not a fixed default — see config.allowFrameEmbedding.
+  frameguard: config.allowFrameEmbedding ? false : { action: 'sameorigin' },
 }));
 app.use(compression());
 app.use(express.json({ limit: '1mb' }));

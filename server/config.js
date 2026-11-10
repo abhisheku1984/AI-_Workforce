@@ -72,6 +72,20 @@ export const config = {
     maxFactsChars: 12000,
   },
   trustProxy: process.env.TRUST_PROXY === 'true',
+  /**
+   * Whether the app may be rendered inside an iframe.
+   *
+   * Preview/tunnel environments and many enterprise portals embed the app in a frame.
+   * Helmet's default `X-Frame-Options: SAMEORIGIN` blocks that, which looks exactly like
+   * "I cannot log in": sign-in succeeds server-side but the framed page cannot keep the
+   * session. Production defaults to not embeddable (clickjacking protection); set
+   * ALLOW_FRAME_EMBEDDING=true for a deployment that must be embedded.
+   */
+  allowFrameEmbedding: process.env.ALLOW_FRAME_EMBEDDING
+    ? process.env.ALLOW_FRAME_EMBEDDING === 'true'
+    : !isProd,
+  /** Cookies are marked Secure only over HTTPS. Plain-HTTP previews would silently drop them. */
+  secureCookies: process.env.INSECURE_COOKIES === 'true' ? false : isProd,
   demoMode: process.env.DEMO_MODE !== 'false',
 };
 

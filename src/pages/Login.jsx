@@ -45,7 +45,17 @@ export default function LoginPage() {
         setError(json?.error?.message || 'Sign-in failed. Check your email and password.');
         return;
       }
-      await refresh();
+      const principal = await refresh();
+      if (!principal) {
+        // The password was accepted but the session cookie did not come back with the next
+        // request. That is a deployment/cookie problem, not a wrong password — say which.
+        setError(
+          'Signed in, but the browser did not send the session cookie back. This usually means the app is ' +
+            'embedded in a frame or served over a different address than the API. Ask whoever runs this ' +
+            'installation to set PUBLIC_HOST and ALLOW_FRAME_EMBEDDING.'
+        );
+        return;
+      }
       navigate(location.state?.from || '/', { replace: true });
     } catch {
       setError('Could not reach the server. Please try again.');
