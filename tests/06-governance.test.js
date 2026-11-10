@@ -327,6 +327,15 @@ test('Automation, approvals, reports and operations', async (t) => {
     record('Authentication', 'Sign-out revokes the token as well as the cookie', true);
   });
 
+  await t.test('the entry document is never cached, so a deploy cannot leave a stale client', async () => {
+    const res = await fetch(`${baseUrl}/utilization`);
+    assert.equal(res.status, 200);
+    const cache = res.headers.get('cache-control') || '';
+    assert.ok(/no-store/i.test(cache), `entry document must be no-store, got "${cache}"`);
+    assert.ok(res.headers.get('x-app-build'), 'build stamp header present');
+    record('Operations', 'Entry document is served no-store with a build stamp', true);
+  });
+
   await t.test('no secrets are committed to the repository', async () => {
     const files = [
       'server/config.js', 'server/index.js', 'server/auth/session.js', 'server/auth/passwords.js',

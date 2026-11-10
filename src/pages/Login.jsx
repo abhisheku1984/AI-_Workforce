@@ -38,15 +38,16 @@ export default function LoginPage() {
       const json = await api.post('/api/auth/login', { email, password });
       // Keep the session token as well as the cookie: some environments block cookies,
       // and without this the very next request would arrive unauthenticated.
-      if (json?.data?.token) setSessionToken(json.data.token);
+      const issuedToken = json?.data?.token || null;
+      if (issuedToken) setSessionToken(issuedToken);
       const principal = await refresh();
       if (!principal) {
-        // The password was accepted but the session cookie did not come back with the next
-        // request. That is a deployment/cookie problem, not a wrong password — say which.
         setError(
-          'Signed in, but the browser did not send the session cookie back. This usually means the app is ' +
-            'embedded in a frame or served over a different address than the API. Ask whoever runs this ' +
-            'installation to set PUBLIC_HOST and ALLOW_FRAME_EMBEDDING.'
+          issuedToken
+            ? 'Signed in, but this browser will not store the session (cookies and local storage are both ' +
+              'blocked in this view). Try opening the app in its own tab, or use a browser that allows storage.'
+            : 'This page is running an older version of the app that cannot hold a session in this view. ' +
+              'Reload the page (Ctrl+Shift+R) and sign in again.'
         );
         return;
       }

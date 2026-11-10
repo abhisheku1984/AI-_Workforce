@@ -18,6 +18,12 @@
  */
 const TOKEN_KEY = 'wiq.session.token';
 
+/**
+ * Some sandboxed frames throw on any localStorage access. Keep the token in memory as
+ * well, so a session survives within the page even when storage is unavailable.
+ */
+let memoryToken = null;
+
 export class ApiClientError extends Error {
   constructor(message, status, code, details) {
     super(message);
@@ -29,18 +35,21 @@ export class ApiClientError extends Error {
 
 export function getSessionToken() {
   try {
-    return window.localStorage.getItem(TOKEN_KEY) || null;
+    const stored = window.localStorage.getItem(TOKEN_KEY);
+    if (stored) return stored;
   } catch {
-    return null; // private mode / storage disabled — cookie still applies
+    /* storage unavailable — fall through to the in-memory copy */
   }
+  return memoryToken;
 }
 
 export function setSessionToken(token) {
+  memoryToken = token || null;
   try {
     if (token) window.localStorage.setItem(TOKEN_KEY, token);
     else window.localStorage.removeItem(TOKEN_KEY);
   } catch {
-    /* storage unavailable — cookie still applies */
+    /* storage unavailable — the in-memory copy still authenticates this page */
   }
 }
 

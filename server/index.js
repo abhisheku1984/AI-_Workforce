@@ -114,6 +114,12 @@ app.get('/api/health', (_req, res) => {
     version: '1.0.0',
     database: dbOk ? 'connected' : 'unavailable',
     ai_provider: config.ai.provider,
+    build: (() => {
+      try {
+        const dist = path.resolve(import.meta.dirname, '..', 'dist', 'assets');
+        return fs.readdirSync(dist).find((f) => /^index-.*\.js$/.test(f)) || null;
+      } catch { return null; }
+    })(),
     time: new Date().toISOString(),
   });
 });
@@ -131,11 +137,42 @@ app.use('/api/governance', governanceRoutes);
 
 app.use('/api', (_req, res) => sendError(res, 404, 'NOT_FOUND', 'That API endpoint does not exist.'));
 
-// Serve the built SPA in production.
+// Serve the built SPA.
+//
+// Asset filenames are content-hashed by the bundler, so they can be cached hard. The
+// entry document must NOT be: a client holding a stale index.html loads a stale bundle
+// and runs old code against a new API — which is exactly how a fixed defect appears to
+// still be broken. index.html is therefore served no-store, with a visible build stamp.
 const distDir = path.resolve(import.meta.dirname, '..', 'dist');
+function buildStamp() {
+  try {
+    const entry = fs.readdirSync(path.join(distDir, 'assets')).find((f) => /^index-.*\.js$/.test(f));
+    const mtime = fs.statSync(path.join(distDir, 'index.html')).mtimeMs;
+    return { entry: entry || null, builtAt: new Date(mtime).toISOString() };
+  } catch {
+    return { entry: null, builtAt: null };
+  }
+}
+
 if (fs.existsSync(distDir)) {
+  const stamp = buildStamp();
+
+  // Hashed assets: immutable and cacheable for a year.
+  app.use('/assets', express.static(path.join(distDir, 'assets'), {
+    immutable: true,
+    maxAge: '1y',
+    fallthrough: true,
+  }));
+
+  // Everything else in dist (favicon, etc.) with a short cache.
   app.use(express.static(distDir, { index: false, maxAge: '1h' }));
-  app.get('*', (_req, res) => res.sendFile(path.join(distDir, 'index.html')));
+
+  app.get('*', (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('X-App-Build', stamp.entry || 'unknown');
+    res.sendFile(path.join(distDir, 'index.html'));
+  });
 }
 
 // Central error handler — never leaks stack traces to clients.
