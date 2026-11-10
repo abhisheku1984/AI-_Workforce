@@ -50,7 +50,7 @@ router.post('/login', ah(async (req, res) => {
 
   db.prepare('UPDATE users SET failed_logins = 0, locked_until = NULL, last_login_at = ? WHERE id = ?').run(now(), user.id);
   const { token, expiresAt } = createSession({ userId: user.id, orgId: user.org_id, ip: req.ip, userAgent: req.headers['user-agent'] });
-  res.setHeader('Set-Cookie', sessionCookie(token, expiresAt));
+  res.setHeader('Set-Cookie', sessionCookie(token, expiresAt, { req }));
   audit(req, { action: 'auth.login', entityType: 'user', entityId: user.id, summary: `${user.email} signed in`, orgId: user.org_id });
   return ok(res, { expiresAt, mustChangePassword: Boolean(user.must_change_password) });
 }));
@@ -60,7 +60,7 @@ router.post('/logout', ah(async (req, res) => {
   const m = new RegExp(`${SESSION_COOKIE}=([^;]+)`).exec(cookies);
   if (m) revokeSession(decodeURIComponent(m[1]));
   if (req.user) audit(req, { action: 'auth.logout', entityType: 'user', entityId: req.user.user.id, summary: `${req.user.user.email} signed out` });
-  res.setHeader('Set-Cookie', sessionCookie('', new Date(0), { clear: true }));
+  res.setHeader('Set-Cookie', sessionCookie('', new Date(0), { clear: true, req }));
   return ok(res, { signedOut: true });
 }));
 

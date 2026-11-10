@@ -258,6 +258,27 @@ test('Automation, approvals, reports and operations', async (t) => {
     record('Authentication', 'Missing or unrecognised session is explained to the user', true);
   });
 
+  await t.test('session cookie attributes follow the transport and the configured policy', async () => {
+    const read = (res) => res.headers.get('set-cookie') || '';
+    const post = (headers) => fetch(`${baseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', ...headers },
+      body: JSON.stringify({ email: 'admin@alpha.test', password: 'DemoPass!2026' }),
+    });
+
+    // Plain HTTP: never Secure (a Secure cookie on HTTP is silently discarded by browsers).
+    const plain = read(await post({}));
+    assert.ok(!/Secure/i.test(plain), 'no Secure on plain HTTP');
+    assert.ok(/SameSite=Lax/i.test(plain), 'Lax by default');
+
+    // HTTPS via a TLS-terminating proxy: Secure is applied.
+    const https = read(await post({ 'x-forwarded-proto': 'https' }));
+    assert.ok(/Secure/i.test(https), 'Secure over HTTPS');
+    assert.ok(/HttpOnly/i.test(https), 'HttpOnly always');
+
+    record('Authentication', 'Session cookie flags match the transport in use', true);
+  });
+
   await t.test('no secrets are committed to the repository', async () => {
     const files = [
       'server/config.js', 'server/index.js', 'server/auth/session.js', 'server/auth/passwords.js',

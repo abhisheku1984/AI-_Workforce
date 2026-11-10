@@ -17,7 +17,7 @@ Status legend: **Shipped** (in this release) · **Next** (justified by known blo
 
 ## 2. Where the product is today
 
-All twelve modules exist and work. The verification run is 97 test cases across six suites with zero failures (`docs/test-report.md`). The honest characterisation is:
+All twelve modules exist and work. The verification run is 98 test cases across six suites with zero failures (`docs/test-report.md`). The honest characterisation is:
 
 > A capable, self-contained analytics and governance product that a small services firm can install and run today, missing the enterprise identity and delivery features most mid-market buyers will ask for in a security review.
 

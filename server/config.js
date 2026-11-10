@@ -86,6 +86,19 @@ export const config = {
     : !isProd,
   /** Cookies are marked Secure only over HTTPS. Plain-HTTP previews would silently drop them. */
   secureCookies: process.env.INSECURE_COOKIES === 'true' ? false : isProd,
+  /**
+   * SameSite policy for the session cookie.
+   *
+   * 'lax' (default) is correct for a normal same-origin deployment and gives real CSRF
+   * protection. 'none' is required when the app runs inside a cross-site frame (previews,
+   * portals, embedded dashboards): a Lax cookie is simply NOT SENT on a cross-site
+   * subresource request, so sign-in appears to succeed and the next request arrives
+   * unauthenticated. 'none' requires Secure, which is applied automatically whenever the
+   * request arrived over HTTPS (browsers reject SameSite=None without Secure).
+   */
+  cookieSameSite: (process.env.COOKIE_SAMESITE || 'lax').toLowerCase() === 'none' ? 'none' : 'lax',
+  /** Log authentication request headers so a cookie problem can be diagnosed from evidence. */
+  debugAuthHeaders: process.env.DEBUG_AUTH_HEADERS === 'true',
   demoMode: process.env.DEMO_MODE !== 'false',
 };
 

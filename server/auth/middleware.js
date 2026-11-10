@@ -1,4 +1,5 @@
 import { loadPrincipal, parseCookies, SESSION_COOKIE } from './session.js';
+import { config } from '../config.js';
 import { sendError } from '../lib/http.js';
 
 /** Attaches req.user (principal) if a valid session cookie is present. */
@@ -6,6 +7,22 @@ export function authenticate(req, _res, next) {
   const cookies = parseCookies(req.headers.cookie || '');
   const token = cookies[SESSION_COOKIE] || null;
   req.user = token ? loadPrincipal(token) : null;
+  if (config.debugAuthHeaders && req.path.startsWith('/auth')) {
+    // Evidence for diagnosing "sign-in succeeded but the session did not stick".
+    // Header values only — never a cookie value or a password.
+    console.log('[auth-debug]', JSON.stringify({
+      path: req.path,
+      method: req.method,
+      host: req.headers.host || null,
+      origin: req.headers.origin || null,
+      x_forwarded_host: req.headers['x-forwarded-host'] || null,
+      x_forwarded_proto: req.headers['x-forwarded-proto'] || null,
+      sec_fetch_site: req.headers['sec-fetch-site'] || null,
+      sec_fetch_mode: req.headers['sec-fetch-mode'] || null,
+      cookie_present: Boolean(token),
+      resolved: Boolean(req.user),
+    }));
+  }
   next();
 }
 

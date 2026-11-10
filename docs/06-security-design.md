@@ -65,7 +65,7 @@ scrypt$N$r$p$salt_b64$hash_b64        N=16384, r=8, p=1, keylen=64, salt=16 rand
 | --- | --- |
 | Token | 32 random bytes, base64url |
 | Storage | SHA-256 hash only (`auth_sessions.token_hash`) |
-| Cookie | `wiq_session`, `HttpOnly`, `SameSite=Lax`, `Path=/`, `Secure` in production |
+| Cookie | `wiq_session`, `HttpOnly`, `Path=/`, `SameSite=Lax` by default (`SameSite=None; Secure` only when `COOKIE_SAMESITE=none` and the request is HTTPS, for cross-site embedding), `Secure` in production. A cross-site embedding weakens CSRF protection, which is why it is opt-in per deployment and the origin check remains in force. |
 | Lifetime | 12 hours (configurable via `SESSION_TTL_HOURS`) |
 | Revocation | `revoked_at` on sign-out, and on password change for all other sessions |
 | Validation per request | `revoked_at IS NULL AND expires_at > now` |

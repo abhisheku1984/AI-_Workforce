@@ -116,14 +116,26 @@ export function parseCookies(header = '') {
   return out;
 }
 
-export function sessionCookie(token, expiresAt, { clear = false } = {}) {
+/** Was this request delivered over HTTPS (directly or via a TLS-terminating proxy)? */
+export function requestIsHttps(req) {
+  if (!req) return config.secureCookies;
+  if (req.secure) return true;
+  return String(req.headers?.['x-forwarded-proto'] || '').split(',')[0].trim() === 'https';
+}
+
+export function sessionCookie(token, expiresAt, { clear = false, req = null } = {}) {
+  const https = requestIsHttps(req);
+  // SameSite=None is only honoured by browsers when the cookie is also Secure. If the
+  // deployment asks for 'none' but the request is plain HTTP, fall back to Lax rather
+  // than sending a cookie the browser will discard.
+  const sameSite = config.cookieSameSite === 'none' && https ? 'None' : 'Lax';
   const parts = [
     `${SESSION_COOKIE}=${clear ? '' : encodeURIComponent(token)}`,
     'Path=/',
     'HttpOnly',
-    'SameSite=Lax',
+    `SameSite=${sameSite}`,
   ];
-  if (config.secureCookies) parts.push('Secure');
+  if (config.secureCookies || https) parts.push('Secure');
   parts.push(clear ? 'Max-Age=0' : `Expires=${new Date(expiresAt).toUTCString()}`);
   return parts.join('; ');
 }
