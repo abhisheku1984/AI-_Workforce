@@ -9,7 +9,7 @@ All commands below are for **Windows PowerShell**, which is what PyCharm's termi
 
 | Requirement | Check | If missing |
 | --- | --- | --- |
-| Node.js 20 or newer | `node -v` | Download the **LTS** installer from nodejs.org. Use Node 22 or 24. |
+| Node.js **22, 24 or 25** | `node -v` | Download the **LTS** installer from nodejs.org. **Avoid Node 26+/very new releases** until the database module publishes binaries for them. |
 | npm | `npm -v` | Comes with Node. |
 | Git | `git --version` | Download Git for Windows. |
 | Python (for PyCharm) | — | Not required to run the app. Only PyCharm itself needs it. |
@@ -37,22 +37,54 @@ No Git? Download the ZIP from the same branch on GitHub, extract it, and `cd` in
 
 ---
 
-## 2. Install the dependencies
+## 2. Check the machine first (10 seconds)
+
+```powershell
+node scripts/preflight.mjs
+```
+
+This reports the Node version, whether the prebuilt database binary matches it, and whether
+dependencies, the interface and the database are present. It prints one short verdict instead of
+a screenful of compiler output. If it says something is wrong, fix that before continuing.
+
+If you would rather stay inside Python/PyCharm, the same check is available as a Python wrapper:
+
+```powershell
+python tools\python\setup_workforceiq.py check
+```
+
+## 3. Install the dependencies
 
 ```powershell
 npm install
 ```
 
-This takes 1–3 minutes. `better-sqlite3` is a compiled module: on Windows it downloads a
-prebuilt binary for your Node version. **If it tries to compile from source**, install the
-Visual Studio C++ build tools, or simply make sure you are on Node 22 LTS (prebuilt binaries
-exist for it).
+This takes 1–3 minutes. It downloads a **prebuilt** database binary for your Node version —
+no C++ compiler is needed on Node 22, 24 or 25.
 
-If you see `gyp ERR!` or `MSBuild` errors, that is the missing C++ toolchain, not the app.
+> **If you are on Node 24 and `npm install` fails with `gyp ERR! find VS ... Could not find any
+> Visual Studio installation`,** that was a real defect in this project: it pinned
+> `better-sqlite3` 13.x, and 13.x publishes **no** prebuilt binaries at all, so every Windows
+> machine had to compile it. The dependency is now pinned to **12.11.1**, which ships prebuilt
+> binaries for Node 22, 24 and 25 on Windows x64.
+>
+> Fix, from the project folder:
+>
+> ```powershell
+> git pull
+> Remove-Item -Recurse -Force node_modules      # clear the half-installed tree
+> npm install
+> ```
+>
+> If you cannot pull, the one-line workaround is `npm install better-sqlite3@12.11.1` after
+> installing the rest, or installing Node 22 LTS and re-running `npm install`.
+>
+> Only if none of that works do you need the C++ toolchain: the "Desktop development with C++"
+> workload from Visual Studio Build Tools, which is a large download.
 
 ---
 
-## 3. Create the database and the demonstration data
+## 4. Create the database and the demonstration data
 
 ```powershell
 npm run migrate
@@ -64,7 +96,7 @@ demonstration organisations — every name ends in "(Demo)" and every row is fla
 
 ---
 
-## 4. Start it
+## 5. Start it
 
 **Easiest, one process, one port:**
 
@@ -98,13 +130,13 @@ To stop a server, press `Ctrl+C` in that terminal.
 
 ---
 
-## 5. Using PyCharm
+## 6. Using PyCharm
 
 You do not need a Python interpreter for this project. Recommended setup:
 
 1. **Open the project:** `File → Open` → select the `AI-_Workforce` folder.
 2. **Use the built-in terminal:** `View → Tool Windows → Terminal` (or `Alt+F12`). It opens in the
-   project folder, so the commands in §2–§4 work directly.
+   project folder, so the commands in §3–§5 work directly.
 3. **Run it with one click** (PyCharm Professional only):
    `Run → Edit Configurations → + → npm` → set *package.json* to the project's `package.json`,
    *Command* = `run`, *Scripts* = `start` → OK → press the green Run arrow.
@@ -113,6 +145,19 @@ You do not need a Python interpreter for this project. Recommended setup:
 4. **Mark folders:** right-click `docs` → `Mark Directory as → Not Excluded` if PyCharm greys it out.
 5. **Exclude `node_modules`** from indexing to keep the IDE fast:
    right-click `node_modules` → `Mark Directory as → Excluded`.
+
+**Prefer Python?** There is a small wrapper that drives Node for you, so you can run everything
+from a PyCharm Python run configuration (`Run → Edit Configurations → + → Python`):
+
+| Command | Does |
+| --- | --- |
+| `python tools\python\setup_workforceiq.py check` | Reports whether the machine can run it |
+| `python tools\python\setup_workforceiq.py install` | `npm install`, build, migrate, seed |
+| `python tools\python\setup_workforceiq.py run` | Builds if needed, then starts the server |
+| `python tools\python\setup_workforceiq.py test` | Runs the test suites |
+| `python tools\python\setup_workforceiq.py reset` | Deletes local data and reseeds |
+
+It still requires Node on PATH — it is a convenience wrapper, not a Python implementation.
 
 A one-line launcher, if you want to double-click something: create `run.ps1` in the project root:
 
@@ -126,12 +171,13 @@ Then in PyCharm: `Run → Edit Configurations → + → Shell Script → Script 
 
 ---
 
-## 6. Common Windows problems
+## 7. Common Windows problems
 
 | Symptom | Cause | Fix |
 | --- | --- | --- |
 | `'NODE_ENV' is not recognized as an internal or external command` | The old start script used Unix syntax | Already fixed in this branch: use `npm start` (it sets production mode in JavaScript) |
-| `gyp ERR! find Python` / `MSBuild` | No C++ build tools for `better-sqlite3` | Use Node 22 LTS, then `npm rebuild better-sqlite3` |
+| `gyp ERR! find VS ... Could not find any Visual Studio installation` | You are on a `better-sqlite3` version with no prebuilt binary for your Node (this project previously pinned 13.x, which has none) | `git pull` (now pinned to 12.11.1, which has Windows prebuilts for Node 22/24/25), then `Remove-Item -Recurse -Force node_modules; npm install`. Still failing: install Node 22 LTS, or the VS C++ build tools. |
+| `'vite' is not recognized` | `npm install` failed earlier, so dev dependencies were never installed | Fix the install error first; `npm run build` needs `vite` |
 | `EADDRINUSE :::4000` | Port 4000 already used | `$env:PORT=4100; npm start` then open http://localhost:4100 |
 | `SESSION_SECRET ... required in production` | `npm run start:prod` without a secret | The script now generates one into `.env` automatically |
 | Blank page after `npm start` | No build yet | Run `npm run build` first; the server serves `dist/` |
@@ -143,7 +189,7 @@ Check the build the server is actually serving: open **http://localhost:4000/api
 
 ---
 
-## 7. Prove it works
+## 8. Prove it works
 
 ```powershell
 npm test
@@ -160,7 +206,7 @@ npm run test:report
 
 ---
 
-## 8. Where everything lives
+## 9. Where everything lives
 
 ```
 AI-_Workforce\
@@ -176,7 +222,7 @@ the session secret — keep it private; it is already excluded from Git.
 
 ---
 
-## 9. Resetting to a clean state
+## 10. Resetting to a clean state
 
 ```powershell
 Remove-Item -Recurse -Force data
