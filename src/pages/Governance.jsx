@@ -34,6 +34,10 @@ function RulesPanel() {
   const rules = useApi('/api/governance/automation/rules');
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState(null);
+  // The form and the list both read rules.data. While the request is in flight, or if it
+  // failed, that is null — and reading into it blanked the page.
+  if (rules.loading) return <Loading rows={3} />;
+  if (!rules.data) return <ErrorState message={rules.error || 'Automation rules are unavailable.'} onRetry={rules.reload} />;
   const [message, setMessage] = useState(null);
   const [form, setForm] = useState({ code: '', name: '', description: '', triggerType: 'manual', actionType: 'generate_report', report_code: 'utilization_summary', audience: 'executive', requiresApproval: true });
 

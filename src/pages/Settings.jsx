@@ -12,6 +12,7 @@ export default function SettingsPage() {
 
   if (settings.loading) return <Loading rows={4} />;
   if (settings.error) return <ErrorState message={settings.error} onRetry={settings.reload} />;
+  if (!settings.data) return <ErrorState message="Settings are unavailable." onRetry={settings.reload} />;
 
   const s = settings.data.settings;
   const editable = can('org.manage');

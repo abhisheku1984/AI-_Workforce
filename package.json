@@ -2,7 +2,7 @@
   "name": "workforceiq",
   "version": "1.0.0",
   "private": true,
-  "description": "WorkforceIQ — AI Workforce & Business Operations Intelligence Platform",
+  "description": "WorkforceIQ \u2014 AI Workforce & Business Operations Intelligence Platform",
   "type": "module",
   "engines": {
     "node": ">=20"
@@ -22,10 +22,11 @@
     "seed": "node server/seed/run.js",
     "seed:demo": "node server/seed/run.js",
     "test": "node --test --test-concurrency=1 tests/*.test.js",
-    "test:report": "node tests/run-report.js"
+    "test:report": "node tests/run-report.js",
+    "test:ui": "node --test --test-concurrency=1 tests/10-ui-smoke.test.js"
   },
   "dependencies": {
-    "better-sqlite3": "12.11.1",
+    "better-sqlite3": "^12.11.1",
     "compression": "^1.7.4",
     "cookie": "^0.7.2",
     "express": "^4.21.2",
@@ -44,6 +45,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "concurrently": "^9.1.0",
+    "happy-dom": "^15.11.7",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.2",

@@ -16,7 +16,7 @@ export default function MetricsPage() {
             <table className="w-full">
               <thead><tr><th className="th">Measure</th><th className="th">How it is calculated</th><th className="th">Notes</th></tr></thead>
               <tbody>
-                {defs.data.metrics.map((m) => (
+                {(defs.data?.metrics || []).map((m) => (
                   <tr key={m.key}>
                     <td className="td whitespace-nowrap"><span className="font-medium">{m.name}</span><span className="block font-mono text-[10px] text-ink-400">{m.key}</span></td>
                     <td className="td text-[13px]">{m.formula}</td>
@@ -28,7 +28,7 @@ export default function MetricsPage() {
           </Card>
           <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card title="Calculation settings for your organization" bodyClass="p-4">
-              <pre className="text-[12px] bg-ink-50 border border-ink-200 rounded-lg p-3 overflow-x-auto">{JSON.stringify(defs.data.calculation_settings, null, 2)}</pre>
+              <pre className="text-[12px] bg-ink-50 border border-ink-200 rounded-lg p-3 overflow-x-auto">{JSON.stringify(defs.data?.calculation_settings ?? {}, null, 2)}</pre>
             </Card>
             <div className="space-y-3">
               <InfoNote tone="brand" title="Why fixed formulas">
@@ -38,7 +38,7 @@ export default function MetricsPage() {
               <InfoNote tone="caution" title="Actuals versus plans versus estimates">
                 Allocations are plans. Timesheets are actuals. Forecasts are estimates. The interface labels all three, and they are never added together.
               </InfoNote>
-              <InfoNote>{defs.data.note}</InfoNote>
+              <InfoNote>{defs.data?.note}</InfoNote>
             </div>
           </div>
         </>

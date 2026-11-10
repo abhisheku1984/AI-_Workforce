@@ -2,6 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './lib/auth';
 import { Layout } from './components/Layout';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { Loading } from './components/ui';
 import LoginPage from './pages/Login';
 import DashboardPage from './pages/Dashboard';
@@ -55,6 +56,7 @@ export default function App() {
         element={(
           <Layout>
             <Suspense fallback={<Loading rows={4} />}>
+              <ErrorBoundary key={location.pathname} label={location.pathname}>
               <Routes>
                 <Route path="/" element={<Guard perm={['analytics.utilization', 'analytics.executive']}><DashboardPage /></Guard>} />
                 <Route path="/workforce" element={<Guard perm="workforce.view"><WorkforcePage /></Guard>} />
@@ -76,6 +78,7 @@ export default function App() {
                 <Route path="/metrics" element={<Guard><MetricsPage /></Guard>} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
+              </ErrorBoundary>
             </Suspense>
           </Layout>
         )}

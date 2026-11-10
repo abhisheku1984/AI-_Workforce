@@ -55,6 +55,33 @@ export function useVoice({ onTranscript, onError } = {}) {
     try { return localStorage.getItem('wiq.voice.name') || ''; } catch { return ''; }
   });
 
+  /* ---------------------------------------------------------------- voice selection */
+
+  // SpeechSynthesis populates asynchronously and fires voiceschanged when ready. Choosing a
+  // voice once and caching it is the documented workaround for Chrome returning [] on first call.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return undefined;
+    const load = () => {
+      const found = window.speechSynthesis.getVoices() || [];
+      if (found.length) setVoices(found);
+    };
+    load();
+    window.speechSynthesis.addEventListener?.('voiceschanged', load);
+    return () => window.speechSynthesis.removeEventListener?.('voiceschanged', load);
+  }, []);
+
+  const preferredVoice = useMemo(
+    () => pickVoice(voices, voiceName),
+    [voices, voiceName],
+  );
+
+  useEffect(() => {
+    try { localStorage.setItem('wiq.voice.name', voiceName || ''); } catch { /* private mode */ }
+  }, [voiceName]);
+
+  // NOTE: every value used in a dependency array below must be declared above this point.
+  // A useCallback's dependency list is evaluated where the hook is called, so referring to a
+  // later-declared const throws "Cannot access before initialization" and blanks the whole app.
   const recognitionRef = useRef(null);
   const transcriptRef = useRef(onTranscript);
   const errorRef = useRef(onError);
@@ -140,30 +167,6 @@ export function useVoice({ onTranscript, onError } = {}) {
     if (listening) stopListening();
     else startListening();
   }, [listening, startListening, stopListening]);
-
-  /* ---------------------------------------------------------------- voice selection */
-
-  // SpeechSynthesis populates asynchronously and fires voiceschanged when ready. Choosing a
-  // voice once and caching it is the documented workaround for Chrome returning [] on first call.
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.speechSynthesis) return undefined;
-    const load = () => {
-      const found = window.speechSynthesis.getVoices() || [];
-      if (found.length) setVoices(found);
-    };
-    load();
-    window.speechSynthesis.addEventListener?.('voiceschanged', load);
-    return () => window.speechSynthesis.removeEventListener?.('voiceschanged', load);
-  }, []);
-
-  const preferredVoice = useMemo(
-    () => pickVoice(voices, voiceName),
-    [voices, voiceName],
-  );
-
-  useEffect(() => {
-    try { localStorage.setItem('wiq.voice.name', voiceName || ''); } catch { /* private mode */ }
-  }, [voiceName]);
 
   /* ---------------------------------------------------------------- speech out */
 

@@ -43,6 +43,7 @@ function OrganizationPanel() {
 
   if (org.loading) return <Loading rows={3} />;
   if (org.error) return <ErrorState message={org.error} onRetry={org.reload} />;
+  if (!org.data) return <ErrorState message="Organization details are unavailable." onRetry={org.reload} />;
   const o = org.data.organization;
   const editable = can('org.manage');
 

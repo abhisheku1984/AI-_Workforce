@@ -47,7 +47,7 @@ export default function ReportsPage() {
 
       {catalogue.loading ? <Loading rows={4} /> : catalogue.error ? <ErrorState message={catalogue.error} onRetry={catalogue.reload} /> : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {catalogue.data.map((r) => (
+          {(catalogue.data || []).map((r) => (
             <Card key={r.code} bodyClass="p-4 flex flex-col justify-between">
               <div>
                 <div className="flex items-start justify-between gap-2">
