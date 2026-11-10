@@ -162,6 +162,41 @@ function buildStamp() {
   }
 }
 
+// Keep dist/ in step with the prebuilt snapshot that ships in the repository.
+//
+// dist/ is ignored by git, so `git pull` updates prebuilt/dist/ and leaves dist/ untouched. Anyone
+// who pulled a release and ran `npm start` therefore kept running the previous build until they
+// remembered to run `npm run use-prebuilt` — a defect that was fixed looked like it was still
+// broken, with the old bundle still on screen. Comparing the entry filenames is cheap and exact:
+// the bundler content-hashes them, so different names mean different code.
+//
+// An explicit DIST_DIR is a deliberate choice and is never overwritten.
+function syncFromPrebuilt() {
+  if (process.env.DIST_DIR) return null;
+  const prebuilt = path.join(ROOT, 'prebuilt', 'dist');
+  const builtEntry = (() => {
+    try { return fs.readdirSync(path.join(distDir, 'assets')).find((f) => /^index-.*\.js$/.test(f)) || null; }
+    catch { return null; }
+  })();
+  const prebuiltEntry = (() => {
+    try { return fs.readdirSync(path.join(prebuilt, 'assets')).find((f) => /^index-.*\.js$/.test(f)) || null; }
+    catch { return null; }
+  })();
+  if (!prebuiltEntry) return null;
+  if (builtEntry === prebuiltEntry) return null;
+  try {
+    fs.rmSync(distDir, { recursive: true, force: true });
+    fs.mkdirSync(distDir, { recursive: true });
+    fs.cpSync(prebuilt, distDir, { recursive: true });
+    console.log(`[api] Interface synced from prebuilt/dist: ${builtEntry || 'nothing'} -> ${prebuiltEntry}`);
+    return { from: builtEntry, to: prebuiltEntry };
+  } catch (err) {
+    console.warn(`[api] Could not sync the interface from prebuilt/dist (${err.message}).`);
+    return null;
+  }
+}
+const syncedBuild = syncFromPrebuilt();
+
 // dist/ only counts if it actually contains an entry document. A directory left behind by a
 // failed or removed build must not shadow a second chance at serving the interface.
 const hasBuiltInterface = fs.existsSync(path.join(distDir, 'index.html'));
@@ -200,14 +235,42 @@ if (hasBuiltInterface) {
     fallthrough: true,
   }));
 
+  // A missing asset must be a 404, never the entry document.
+  //
+  // Without this, a browser holding a stale index.html asks for an entry bundle that no longer
+  // exists, receives index.html with a 200 and a text/html content type, refuses to execute it as
+  // a module, and shows a blank page with no error anywhere the user can see. The app then looks
+  // broken after a perfectly good update, and a hard reload is the only cure. A 404 makes the
+  // failure visible in the network panel and in the server log instead.
+  app.use('/assets', (req, res, next) => {
+    if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+    console.warn(`[api] Missing asset requested: ${req.originalUrl} — the client is running a stale build. Serving 404 so the failure is visible.`);
+    res.status(404).type('text/plain').send(
+      'This interface file does not exist in the current build.\n' +
+      `Current build: ${stamp.entry || 'unknown'}\n` +
+      'Reload the page with Ctrl+Shift+R (hard reload) to fetch the current interface.\n',
+    );
+  });
+
   // Everything else in dist (favicon, etc.) with a short cache.
   app.use(express.static(distDir, { index: false, maxAge: '1h' }));
+
+  // Serve the entry document with the build stamp written into it. Rendering it rather than
+  // sending the file means the version is visible in the response itself — one look at the page
+  // source, or at the console line the app prints, says exactly which build is running.
+  let entryHtml = null;
+  try { entryHtml = fs.readFileSync(path.join(distDir, 'index.html'), 'utf8'); } catch { entryHtml = null; }
 
   app.get('*', (_req, res) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('X-App-Build', stamp.entry || 'unknown');
-    res.sendFile(path.join(distDir, 'index.html'));
+    if (!entryHtml) return res.sendFile(path.join(distDir, 'index.html'));
+    const html = entryHtml.replace(
+      /<meta name="app-build" content="[^"]*" \/>/,
+      `<meta name="app-build" content="${stamp.entry || 'unknown'}" />`,
+    );
+    res.type('html').send(html);
   });
 }
 
@@ -227,6 +290,10 @@ app.use((err, req, res, _next) => {
 export function start(port = config.port) {
   const server = app.listen(port, '0.0.0.0', () => {
     console.log(`[api] WorkforceIQ listening on http://localhost:${server.address().port} (${config.env})`);
+    if (syncedBuild) {
+      console.log(`[api] This checkout ships a newer interface than dist/ had; it is now in use (${syncedBuild.to}).`);
+      console.log('[api] If a browser still shows an old page, hard-reload it: Ctrl+Shift+R');
+    }
     console.log(`[api] AI provider: ${config.ai.provider}${config.ai.provider !== 'local' ? ` (${config.ai.model})` : ' (deterministic, grounded)'}`);
     if (!fs.existsSync(path.join(distDir, 'index.html'))) {
       console.warn('[api] No built interface in dist/ — http://localhost:' + server.address().port + ' will explain how to fix that.');

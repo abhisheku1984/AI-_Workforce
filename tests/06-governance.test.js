@@ -335,7 +335,41 @@ test('Automation, approvals, reports and operations', async (t) => {
     const cache = res.headers.get('cache-control') || '';
     assert.ok(/no-store/i.test(cache), `entry document must be no-store, got "${cache}"`);
     assert.ok(res.headers.get('x-app-build'), 'build stamp header present');
+    const html = await res.text();
+    assert.match(html, /<meta name="app-build" content="[^"]+"/,
+      'the entry document must carry a readable build stamp');
+    assert.doesNotMatch(html, /content="dev"/,
+      'the served document must name the real build, not the placeholder');
     record('Operations', 'Entry document is served no-store with a build stamp', true);
+  });
+
+  await t.test('a missing interface asset is a 404, not a page that silently blanks', async () => {
+    // Serving the entry document for a missing bundle gives the browser HTML where it expects
+    // JavaScript. It refuses to execute it, the page stays blank, and nothing reports an error.
+    // A 404 puts the failure in the network panel, the server log and this test.
+    const res = await fetch(`${baseUrl}/assets/index-DOES-NOT-EXIST.js`);
+    assert.equal(res.status, 404, 'a missing asset must not resolve to the entry document');
+    const type = res.headers.get('content-type') || '';
+    assert.match(type, /text\/plain/, `a missing asset must not be served as ${type}`);
+    const body = await res.text();
+    assert.match(body, /hard reload|Ctrl\+Shift\+R/i, 'the response should say how to recover');
+    record('Operations', 'A missing asset returns 404 with recovery instructions', true);
+  });
+
+  await t.test('the interface in dist/ is kept in step with the prebuilt snapshot', async () => {
+    // dist/ is ignored by git, so a pull updates prebuilt/dist/ and leaves dist/ behind. The
+    // server compares the content-hashed entry filenames at startup and copies the snapshot over
+    // when they differ, so an update cannot leave someone running last release's interface.
+    const src = fs.readFileSync('server/index.js', 'utf8');
+    assert.match(src, /function syncFromPrebuilt/, 'startup must reconcile dist/ with prebuilt/dist');
+    assert.ok(src.includes('index-.*'), 'the comparison must use the content-hashed entry name');
+    assert.match(src, /if \(process\.env\.DIST_DIR\) return null/, 'an explicit DIST_DIR must be respected');
+
+    const distEntry = fs.readdirSync('dist/assets').find((f) => /^index-.*\.js$/.test(f));
+    const prebuiltEntry = fs.readdirSync('prebuilt/dist/assets').find((f) => /^index-.*\.js$/.test(f));
+    assert.equal(distEntry, prebuiltEntry,
+      `dist/ serves ${distEntry} but prebuilt/dist/ ships ${prebuiltEntry} — run npm run use-prebuilt`);
+    record('Operations', 'dist/ never falls behind the committed prebuilt snapshot', true);
   });
 
   await t.test('no secrets are committed to the repository', async () => {
