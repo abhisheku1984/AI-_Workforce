@@ -2,7 +2,7 @@
   "name": "workforceiq",
   "version": "1.0.0",
   "private": true,
-  "description": "WorkforceIQ \u2014 AI Workforce & Business Operations Intelligence Platform",
+  "description": "WorkforceIQ — AI Workforce & Business Operations Intelligence Platform",
   "type": "module",
   "engines": {
     "node": ">=20"
@@ -12,6 +12,7 @@
     "dev:api": "node server/index.js",
     "preflight": "node scripts/preflight.mjs",
     "build": "vite build",
+    "use-prebuilt": "node scripts/use-prebuilt.mjs",
     "start": "node server/index.js",
     "start:prod": "node scripts/start-prod.mjs",
     "preview": "npm run build && node scripts/start-prod.mjs",

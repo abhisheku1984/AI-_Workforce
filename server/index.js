@@ -3,6 +3,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import path from 'node:path';
 import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { config } from './config.js';
 import { migrate, getDb } from './db/index.js';
 import { authenticate } from './auth/middleware.js';
@@ -190,8 +191,22 @@ app.use((err, req, res, _next) => {
 
 export function start(port = config.port) {
   const server = app.listen(port, '0.0.0.0', () => {
-    console.log(`[api] WorkforceIQ listening on 0.0.0.0:${server.address().port} (${config.env})`);
+    console.log(`[api] WorkforceIQ listening on http://localhost:${server.address().port} (${config.env})`);
     console.log(`[api] AI provider: ${config.ai.provider}${config.ai.provider !== 'local' ? ` (${config.ai.model})` : ' (deterministic, grounded)'}`);
+    if (!fs.existsSync(path.join(distDir, 'index.html'))) {
+      console.warn('[api] No built interface found. The API works, but http://localhost:' + server.address().port + ' has no pages.');
+      console.warn('[api] Build it with: npm run build   (or use: npm run dev for hot reload)');
+    }
+  });
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`[api] Port ${port} is already in use — another copy of the app is probably running.`);
+      console.error('[api] Start on a different port:  $env:PORT=4001; npm start');
+      console.error(`[api] Or find and stop the process:  Get-NetTCPConnection -LocalPort ${port} -State Listen | Select-Object OwningProcess`);
+    } else {
+      console.error('[api] Failed to start:', err.message);
+    }
+    process.exit(1);
   });
   const shutdown = () => {
     server.close(() => process.exit(0));
@@ -203,6 +218,22 @@ export function start(port = config.port) {
 }
 
 // Only listen when executed directly (tests import the app instead).
-if (process.argv[1] && process.argv[1].endsWith('server/index.js')) start();
+//
+// Do not compare the raw argv[1] string: on Windows it is an absolute path with
+// backslashes ("E:\\proj\\server\\index.js"), so endsWith('server/index.js') is false and
+// the server exits silently — `npm start` appears to do nothing at all. Compare the
+// resolved real paths instead, and never let a detection failure take the process down.
+function invokedDirectly() {
+  const entry = process.argv[1];
+  if (!entry) return false;
+  try {
+    return fs.realpathSync(path.resolve(entry)) === fs.realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return /(^|[/\\])server[/\\]index\.js$/i.test(entry);
+  }
+}
+
+// Importing this module (as the tests do) must not open a port: the caller decides.
+if (invokedDirectly()) start();
 
 export { app };

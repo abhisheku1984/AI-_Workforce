@@ -101,6 +101,9 @@ def cmd_check() -> int:
 
     if (ROOT / "dist" / "index.html").exists():
         say("v", "Interface is built.")
+    elif (ROOT / "prebuilt" / "dist" / "index.html").exists():
+        say("!", "Interface not built yet; a prebuilt snapshot is available — run: npm run use-prebuilt")
+        warn = True
     else:
         say("!", "Interface is not built yet — the install step does this.")
         warn = True
@@ -118,12 +121,24 @@ def cmd_check() -> int:
     return 0
 
 
+def build_interface() -> bool:
+    """Build the interface, falling back to the committed snapshot if policy blocks it."""
+    if run(["npm", "run", "build"], check=False) == 0:
+        return True
+    say("!", "The build failed. On Windows this is usually an Application Control policy")
+    say(" ", "blocking the bundler's native binary, not a problem with the app.")
+    if (ROOT / "prebuilt" / "dist" / "index.html").exists():
+        say("i", "Installing the prebuilt interface snapshot instead.")
+        return run(["npm", "run", "use-prebuilt"], check=False) == 0
+    return False
+
+
 def cmd_install() -> int:
     if node_version() is None or not npm_available():
         say("X", "Node.js/npm not found. Install Node 24 LTS first: https://nodejs.org")
         return 1
     run(["npm", "install"])
-    run(["npm", "run", "build"])
+    build_interface()
     run(["npm", "run", "migrate"])
     run(["npm", "run", "seed"])
     print("\nSetup complete. Start the app with:\n    python tools/python/setup_workforceiq.py run\n")
@@ -133,7 +148,7 @@ def cmd_install() -> int:
 def cmd_run() -> int:
     if not (ROOT / "dist" / "index.html").exists():
         say("i", "No built interface found — building first.")
-        run(["npm", "run", "build"])
+        build_interface()
     if not (ROOT / "data" / "workforceiq.db").exists():
         say("i", "No database found — creating and seeding it.")
         run(["npm", "run", "migrate"])

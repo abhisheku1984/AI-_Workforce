@@ -103,8 +103,34 @@ if (!fs.existsSync(path.join(root, 'node_modules', 'vite'))) {
 
 if (fs.existsSync(path.join(root, 'dist', 'index.html'))) {
   say(OK, 'Interface is built (dist/ exists).');
+} else if (fs.existsSync(path.join(root, 'prebuilt', 'dist', 'index.html'))) {
+  say(WARN, 'Interface not built, but a prebuilt snapshot ships with the repository.');
+  say(' ', 'Install it with: npm run use-prebuilt    (needs no native code)');
+  say(' ', 'Or build from source with: npm run build');
+  nodeWarning = true;
 } else {
   say(WARN, 'Interface not built yet — run: npm run build');
+  nodeWarning = true;
+}
+
+// Vite builds with Rollup, which loads a compiled native module. Some Windows policies
+// block it outright; detect that and point at the prebuilt path instead of failing later.
+try {
+  const { createRequire } = await import('node:module');
+  const require = createRequire(import.meta.url);
+  require('rollup');
+  say(OK, 'Bundler loads — npm run build will work.');
+} catch (err) {
+  const msg = String(err.message || err);
+  if (/Application Control policy|blocked this file|ERR_DLOPEN_FAILED/i.test(msg)) {
+    say(WARN, 'A Windows Application Control policy blocks the bundler (rollup native module).');
+    say(' ', 'You cannot run npm run build on this machine. Use the prebuilt interface instead:');
+    say(' ', '    npm run use-prebuilt    then    npm start');
+    say(' ', 'Or use the dev server, which does not load that binary: npm run dev');
+  } else {
+    say(WARN, 'Bundler did not load: ' + msg.split('\n')[0]);
+    say(' ', 'Run npm install, or use npm run use-prebuilt if only the build fails.');
+  }
   nodeWarning = true;
 }
 

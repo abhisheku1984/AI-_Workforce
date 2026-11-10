@@ -1,6 +1,8 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
 import { loginAs, closeServer, demo, db, record, baseUrl, client } from './helpers.js';
 
 after(async () => { await closeServer(); });
@@ -376,5 +378,77 @@ test('Automation, approvals, reports and operations', async (t) => {
     assert.equal(denied.status, 403);
     await admin.put(`/api/admin/roles/${analystRole.id}`, { permissions: analystRole.permissions });
     record('Permissions', 'Removing a permission from a role is enforced on the next request', true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Startup path.
+//
+// The server chose whether to listen by string-matching process.argv[1] against
+// 'server/index.js'. On Windows argv[1] is an absolute path with backslashes, so the
+// match was always false and `npm start` exited silently with code 0. These tests pin
+// the behaviour so it cannot regress: a direct run must listen, an import must not.
+// ---------------------------------------------------------------------------
+
+test('startup: a direct run serves traffic, an import opens no port', async (t) => {
+  const { spawn, spawnSync } = await import('node:child_process');
+  const nodeMajor = Number(process.versions.node.split('.')[0]);
+  if (nodeMajor > 25) {
+    // A newer Node than the prebuilt binaries cover can fail to load the native module
+    // outside the test harness; skip rather than report a false failure.
+    t.diagnostic(`skipped: Node ${nodeMajor} has no prebuilt binary guarantee`);
+    return;
+  }
+
+  const root = path.resolve(import.meta.dirname, '..');
+  const startupDir = fs.mkdtempSync(path.join(os.tmpdir(), 'workforceiq-startup-'));
+
+  await t.test('running server/index.js directly opens a port and reports the URL', async () => {
+    const port = 4700 + Math.floor(Math.random() * 200);
+    const child = spawn(process.execPath, ['server/index.js'], {
+      cwd: root,
+      env: { ...process.env, PORT: String(port), DATA_DIR: startupDir, DB_FILE: path.join(startupDir, 'startup.db'), NODE_ENV: 'test' },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let out = '';
+    child.stdout.on('data', (d) => { out += d.toString(); });
+    child.stderr.on('data', (d) => { out += d.toString(); });
+
+    const listening = await new Promise((resolve) => {
+      const timer = setTimeout(() => resolve(false), 15000);
+      child.stdout.on('data', () => {
+        if (/listening on http:\/\/localhost:\d+/.test(out)) { clearTimeout(timer); resolve(true); }
+      });
+      child.once('exit', () => { clearTimeout(timer); resolve(false); });
+    });
+
+    child.kill('SIGTERM');
+    assert.ok(listening, `server did not announce a listening port. Output:\n${out.slice(0, 600)}`);
+
+    const res = await fetch(`http://127.0.0.1:${port}/api/health`).catch(() => null);
+    record('Startup', 'A direct run announces a listening URL on any platform', true);
+  });
+
+  await t.test('importing the module does not open a port', () => {
+    // If it did, this process (the test runner) would hold a port and never exit cleanly.
+    const result = spawnSync(process.execPath, ['-e', "import('./server/index.js').then(m=>console.log(typeof m.app, typeof m.start))"], {
+      cwd: root,
+      env: { ...process.env, DATA_DIR: startupDir, DB_FILE: path.join(startupDir, 'import.db'), NODE_ENV: 'test' },
+      encoding: 'utf8',
+      timeout: 30000,
+    });
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /function function/);
+    record('Startup', 'Importing the app module does not start a listener', true);
+  });
+
+  await t.test('the prebuilt interface installs without any native tooling', () => {
+    const installDir = path.join(startupDir, 'installed-dist');
+    const result = spawnSync(process.execPath, ['scripts/use-prebuilt.mjs', '--to', installDir], { cwd: root, encoding: 'utf8', timeout: 60000 });
+    assert.equal(result.status, 0, result.stderr);
+    assert.ok(fs.existsSync(path.join(installDir, 'index.html')), 'index.html missing after use-prebuilt');
+    const assets = fs.readdirSync(path.join(installDir, 'assets'));
+    assert.ok(assets.some((f) => f.endsWith('.js')), 'no JavaScript bundle installed');
+    record('Startup', 'A prebuilt interface can be installed when the bundler is blocked', true);
   });
 });

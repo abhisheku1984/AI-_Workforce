@@ -33,6 +33,10 @@ npm run seed                 # create three fictional demonstration tenants
 npm run dev                  # API on :4000, interface on :5173
 ```
 
+If `npm run build` is blocked by a Windows security policy (Application Control can reject
+Rollup's native binary), install the interface snapshot that ships with the repository instead:
+`npm run use-prebuilt && npm start`. See [`LOCAL-SETUP.md`](LOCAL-SETUP.md) §7b.
+
 `npm start` runs the built app on a single port (4000) and works on Windows, macOS and Linux:
 the production start script sets `NODE_ENV` in JavaScript rather than using Unix-only
 `VAR=value command` syntax, and generates a `SESSION_SECRET` into `.env` on first run if none

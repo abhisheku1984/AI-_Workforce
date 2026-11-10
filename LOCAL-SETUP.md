@@ -98,6 +98,13 @@ demonstration organisations — every name ends in "(Demo)" and every row is fla
 
 ## 5. Start it
 
+> **If `npm start` prints nothing at all and returns to the prompt**, you are on a build older than
+> the fix for this: the server decided whether it was being run directly by string-matching
+> `server/index.js` against `process.argv[1]`, which is an absolute path with **backslashes** on
+> Windows, so the match failed and the server never started. Pull the latest code
+> (`git pull`) — the check now compares resolved paths, and a failed port bind reports itself
+> instead of exiting quietly.
+
 **Easiest, one process, one port:**
 
 ```powershell
@@ -178,6 +185,9 @@ Then in PyCharm: `Run → Edit Configurations → + → Shell Script → Script 
 | `'NODE_ENV' is not recognized as an internal or external command` | The old start script used Unix syntax | Already fixed in this branch: use `npm start` (it sets production mode in JavaScript) |
 | `gyp ERR! find VS ... Could not find any Visual Studio installation` | You are on a `better-sqlite3` version with no prebuilt binary for your Node (this project previously pinned 13.x, which has none) | `git pull` (now pinned to 12.11.1, which has Windows prebuilts for Node 22/24/25), then `Remove-Item -Recurse -Force node_modules; npm install`. Still failing: install Node 22 LTS, or the VS C++ build tools. |
 | `'vite' is not recognized` | `npm install` failed earlier, so dev dependencies were never installed | Fix the install error first; `npm run build` needs `vite` |
+| `An Application Control policy has blocked this file` (rollup `.node`) | A Windows security policy blocks the bundler's native binary — not an app defect | `npm run use-prebuilt` then `npm start`; or `npm run dev`; see §7b |
+| `npm start` prints nothing, returns to the prompt | Server's direct-invocation check failed on Windows path separators (fixed) | `git pull`, then `npm start` |
+| `npm start` exits with "Port 4000 is already in use" | Another copy is still running | `Get-NetTCPConnection -LocalPort 4000 -State Listen \| Select-Object OwningProcess`, then `Stop-Process -Id <pid>`; or `$env:PORT=4001; npm start` |
 | `EADDRINUSE :::4000` | Port 4000 already used | `$env:PORT=4100; npm start` then open http://localhost:4100 |
 | `SESSION_SECRET ... required in production` | `npm run start:prod` without a secret | The script now generates one into `.env` automatically |
 | Blank page after `npm start` | No build yet | Run `npm run build` first; the server serves `dist/` |
@@ -188,6 +198,46 @@ Check the build the server is actually serving: open **http://localhost:4000/api
 `build` field names the exact bundle in use.
 
 ---
+
+## 7b. If the build is blocked by a security policy
+
+`npm run build` runs Vite → Rollup → a compiled native module
+(`rollup.win32-x64-msvc.node`). On managed Windows machines, Application Control or Smart App
+Control can block that file:
+
+```
+Error: An Application Control policy has blocked this file.
+  ...\node_modules\@rollup\rollup-win32-x64-msvc\rollup.win32-x64-msvc.node
+    code: 'ERR_DLOPEN_FAILED'
+```
+
+This is your machine's policy, not a defect in the app — and note that the **database** module
+loaded fine, so only that one binary is affected. You have three options, best first:
+
+**1. Use the prebuilt interface (no native code, works everywhere)**
+
+A snapshot of the built interface ships with the repository in `prebuilt/dist/`. The server only
+needs `dist/` to exist; it does not care how it got there.
+
+```powershell
+npm run use-prebuilt
+npm start
+```
+
+Trade-off, stated plainly: it is a **snapshot of the source as committed**, not a fresh build. If
+you edit anything under `src/`, the change will not appear until you rebuild on a machine where
+the bundler is permitted.
+
+**2. Use the dev server** — `npm run dev` uses esbuild for the interface and does **not** load
+the Rollup binary. Open http://localhost:5173. Hot reload works, so this is the better choice if
+you intend to change the front end. (If esbuild is blocked too, fall back to option 1.)
+
+**3. Ask IT to allow the file** — allow
+`node_modules\@rollup\rollup-win32-x64-msvc\rollup.win32-x64-msvc.node`, or the project folder,
+then `npm run build`.
+
+To check which of these applies before you start, run `node scripts/preflight.mjs`: it loads the
+bundler deliberately and tells you if it is blocked.
 
 ## 8. Prove it works
 
