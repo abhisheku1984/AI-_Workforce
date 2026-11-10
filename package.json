@@ -2,12 +2,13 @@
   "name": "workforceiq",
   "version": "1.0.0",
   "private": true,
-  "description": "WorkforceIQ — AI Workforce & Business Operations Intelligence Platform",
+  "description": "WorkforceIQ \u2014 AI Workforce & Business Operations Intelligence Platform",
   "type": "module",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
+    "status": "node scripts/status.mjs",
     "dev": "concurrently -n api,web -c cyan,magenta \"node server/index.js\" \"vite --host 0.0.0.0\"",
     "dev:api": "node server/index.js",
     "preflight": "node scripts/preflight.mjs",

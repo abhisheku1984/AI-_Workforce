@@ -37,6 +37,28 @@ No Git? Download the ZIP from the same branch on GitHub, extract it, and `cd` in
 
 ---
 
+### You must be inside the project folder
+
+Every `npm` and `git` command must run **inside** the folder that contains `package.json`.
+If your prompt shows the parent directory, they all fail with `ENOENT ... open 'package.json'`
+or `fatal: not a git repository`:
+
+```text
+PS E:\PythonProject1>              <-- wrong: the repository is one level down
+PS E:\PythonProject1\AI-_Workforce>  <-- right
+```
+
+Fix: `cd AI-_Workforce`
+
+If you are ever unsure where you are or what state the checkout is in, run:
+
+```powershell
+npm run status
+```
+
+It prints the folder, branch, commit, and whether dependencies, the interface, the database and
+`.env` are present, then tells you the one next step. It changes nothing.
+
 ## 2. Check the machine first (10 seconds)
 
 ```powershell
@@ -166,6 +188,11 @@ from a PyCharm Python run configuration (`Run → Edit Configurations → + → 
 
 It still requires Node on PATH — it is a convenience wrapper, not a Python implementation.
 
+**Check the working directory** of any PyCharm run configuration you create: it must be the
+project root (`E:\PythonProject1\AI-_Workforce`), not the parent folder, or the wrapper will
+not find `package.json`. PyCharm defaults it to whatever folder you had open, so set it
+explicitly in the configuration's *Working directory* field.
+
 A one-line launcher, if you want to double-click something: create `run.ps1` in the project root:
 
 ```powershell
@@ -186,6 +213,7 @@ Then in PyCharm: `Run → Edit Configurations → + → Shell Script → Script 
 | `gyp ERR! find VS ... Could not find any Visual Studio installation` | You are on a `better-sqlite3` version with no prebuilt binary for your Node (this project previously pinned 13.x, which has none) | `git pull` (now pinned to 12.11.1, which has Windows prebuilts for Node 22/24/25), then `Remove-Item -Recurse -Force node_modules; npm install`. Still failing: install Node 22 LTS, or the VS C++ build tools. |
 | `'vite' is not recognized` | `npm install` failed earlier, so dev dependencies were never installed | Fix the install error first; `npm run build` needs `vite` |
 | `An Application Control policy has blocked this file` (rollup `.node`) | A Windows security policy blocks the bundler's native binary — not an app defect | `npm run use-prebuilt` then `npm start`; or `npm run dev`; see §7b |
+| `npm error enoent ... open 'package.json'` or `fatal: not a git repository` | You are running the command one folder above the repository | `cd AI-_Workforce`, then `npm run status` — see the box at the top of §1 |
 | `npm start` prints nothing, returns to the prompt | Server's direct-invocation check failed on Windows path separators (fixed) | `git pull`, then `npm start` |
 | `npm start` exits with "Port 4000 is already in use" | Another copy is still running | `Get-NetTCPConnection -LocalPort 4000 -State Listen \| Select-Object OwningProcess`, then `Stop-Process -Id <pid>`; or `$env:PORT=4001; npm start` |
 | `EADDRINUSE :::4000` | Port 4000 already used | `$env:PORT=4100; npm start` then open http://localhost:4100 |
