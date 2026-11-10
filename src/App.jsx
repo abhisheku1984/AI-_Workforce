@@ -13,6 +13,7 @@ const AllocationPage = lazy(() => import('./pages/Allocation'));
 const FinancePage = lazy(() => import('./pages/Finance'));
 const InsightsPage = lazy(() => import('./pages/Insights'));
 const AssistantPage = lazy(() => import('./pages/Assistant'));
+const CrmPage = lazy(() => import('./pages/Crm'));
 const ForecastPage = lazy(() => import('./pages/Forecast'));
 const ReportsPage = lazy(() => import('./pages/Reports'));
 const DataPage = lazy(() => import('./pages/Data'));
@@ -63,6 +64,7 @@ export default function App() {
                 <Route path="/finance" element={<Guard perm={['finance.view', 'workforce.cost.view']}><FinancePage /></Guard>} />
                 <Route path="/insights" element={<Guard perm="ai.insights"><InsightsPage /></Guard>} />
                 <Route path="/assistant" element={<Guard perm="ai.assistant"><AssistantPage /></Guard>} />
+                <Route path="/crm" element={<Guard perm="crm.view"><CrmPage /></Guard>} />
                 <Route path="/forecast" element={<Guard perm="forecast.view"><ForecastPage /></Guard>} />
                 <Route path="/reports" element={<Guard perm="report.view"><ReportsPage /></Guard>} />
                 <Route path="/data" element={<Guard perm="import.manage"><DataPage /></Guard>} />

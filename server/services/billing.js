@@ -30,7 +30,7 @@ export const PLAN_TIERS = [
     code: 'enterprise',
     name: 'Enterprise',
     description: 'Multi-business-unit governance, forecasting, automation and integration readiness.',
-    includes: ['org_admin', 'data_ingestion', 'workforce', 'utilization', 'allocation', 'finance', 'dashboards', 'reports', 'ai_assistant', 'ai_insights', 'forecasting', 'automation'],
+    includes: ['org_admin', 'data_ingestion', 'workforce', 'utilization', 'allocation', 'finance', 'dashboards', 'reports', 'ai_assistant', 'ai_insights', 'forecasting', 'automation', 'crm'],
     optional: [],
     seatGuidance: 'Unlimited named users',
     employeeBand: 'Unlimited resources',

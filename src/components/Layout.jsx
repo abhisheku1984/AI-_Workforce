@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
+import { AiAuthorDock } from './AiAuthorDock';
 import { titleCase } from '../lib/format';
 
 // Size explicitly. 'w-4.5 h-4.5' is not a Tailwind v3 spacing value, so it compiled to no
@@ -20,6 +21,7 @@ function Icon({ name, className = '' }) {
     governance: 'M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3Zm-1 6h2v4h-2V8Zm0 6h2v2h-2v-2Z',
     metric: 'M4 19h16M7 19V9m5 10V4m5 15v-7',
     scenario: 'M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm13 0v6m-3-3h6',
+    crm: 'M4 5h16v14H4V5Zm3 4h4m-4 3h10m-10 3h7',
   };
   return (
     <svg
@@ -44,6 +46,7 @@ const NAV = [
   { to: '/workforce', label: 'Workforce', icon: 'workforce', perm: 'workforce.view' },
   { to: '/utilization', label: 'Utilization', icon: 'metric', perm: 'analytics.utilization' },
   { to: '/projects', label: 'Projects & Demand', icon: 'projects', perm: 'project.view' },
+  { to: '/crm', label: 'CRM', icon: 'crm', perm: 'crm.view' },
   { to: '/allocation', label: 'Allocation', icon: 'scenario', perm: 'allocation.view' },
   { to: '/finance', label: 'Finance', icon: 'reports', perm: ['finance.view', 'workforce.cost.view'] },
   { to: '/insights', label: 'AI Insights', icon: 'insights', perm: 'ai.insights' },
@@ -192,6 +195,10 @@ export function Layout({ children }) {
           WorkforceIQ · Demonstration build · All organizations, people and figures in this environment are fictional. Not for production use without the documented deployment and security review.
         </footer>
       </div>
+
+      {/* Available on every page: the moment a question occurs to someone, they are looking at
+          the data it is about. */}
+      <AiAuthorDock />
     </div>
   );
 }

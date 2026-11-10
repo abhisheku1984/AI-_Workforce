@@ -15,6 +15,7 @@ export const MODULE_CATALOGUE = [
   { code: 'dashboards', name: 'Executive Dashboards', description: 'Role-aware dashboards and drill-downs.', stage: 'core', sort_order: 7 },
   { code: 'reports', name: 'Management Reports', description: 'Downloadable reports with lineage metadata.', stage: 'core', sort_order: 8 },
   { code: 'ai_assistant', name: 'AI Business Assistant', description: 'Grounded natural-language answers with evidence.', stage: 'ai', sort_order: 9 },
+  { code: 'crm', name: 'CRM', description: 'Leads and pipeline, drafted by the assistant and confirmed by a human before they are saved.', stage: 'core', sort_order: 10 },
   { code: 'ai_insights', name: 'AI Recommendations', description: 'Evidence-backed insights and review workflow.', stage: 'ai', sort_order: 10 },
   { code: 'forecasting', name: 'Forecasting & Predictive Intelligence', description: 'Trend forecasts with stated limitations.', stage: 'predictive', sort_order: 11 },
   { code: 'automation', name: 'Workflow Automation', description: 'Approval-gated automation rules and notifications.', stage: 'automation', sort_order: 12 },
@@ -27,7 +28,34 @@ export function ensureModuleCatalogue() {
   for (const m of MODULE_CATALOGUE) stmt.run(m.code, m.name, m.description, m.stage, m.sort_order);
 }
 
-const DEFAULT_MODULES = ['org_admin', 'data_ingestion', 'workforce', 'utilization', 'allocation', 'finance', 'dashboards', 'reports', 'ai_assistant', 'ai_insights'];
+const DEFAULT_MODULES = ['org_admin', 'data_ingestion', 'workforce', 'utilization', 'allocation', 'finance', 'dashboards', 'reports', 'ai_assistant', 'ai_insights', 'crm'];
+
+/**
+ * Bring system roles up to the current permission catalogue.
+ *
+ * Separate from seedOrgDefaults because seeding only runs on a fresh organisation: an
+ * installation created before CRM existed would otherwise have no role — not even its
+ * administrator — carrying the new permissions, and upgrading would need a manual SQL edit.
+ * Called at startup, so a deployment picks up new capabilities by being restarted.
+ */
+export function refreshSystemRoles() {
+  const db = getDb();
+  const ts = now();
+  let updated = 0;
+  for (const t of ROLE_TEMPLATES) {
+    const rows = db.prepare('SELECT id, permissions FROM roles WHERE code = ? AND is_system = 1').all(t.code);
+    for (const row of rows) {
+      const current = JSON.parse(row.permissions || '[]');
+      const added = t.permissions.filter((p) => !current.includes(p));
+      if (added.length) {
+        db.prepare('UPDATE roles SET permissions = ? WHERE id = ?')
+          .run(JSON.stringify([...current, ...added]), row.id);
+        updated += 1;
+      }
+    }
+  }
+  return updated;
+}
 
 export function seedOrgDefaults(orgId, { modules = DEFAULT_MODULES, planCode = 'professional', seats = 10 } = {}) {
   const db = getDb();
@@ -36,11 +64,23 @@ export function seedOrgDefaults(orgId, { modules = DEFAULT_MODULES, planCode = '
 
   // System role templates, cloned per organization so they can be customised.
   for (const t of ROLE_TEMPLATES) {
-    const exists = db.prepare('SELECT id FROM roles WHERE org_id = ? AND code = ?').get(orgId, t.code);
+    const exists = db.prepare('SELECT * FROM roles WHERE org_id = ? AND code = ?').get(orgId, t.code);
     if (!exists) {
       db.prepare(`INSERT INTO roles (org_id, code, name, description, permissions, is_system, created_at)
           VALUES (?, ?, ?, ?, ?, 1, ?)`)
         .run(orgId, t.code, t.name, t.description, JSON.stringify(t.permissions), ts);
+      continue;
+    }
+    // A system role gains new permissions when the product gains new capability. Without this,
+    // an organisation seeded before CRM existed would have nobody — not even its administrator —
+    // able to open it, and the only fix would be a manual database edit.
+    if (exists.is_system) {
+      const current = JSON.parse(exists.permissions || '[]');
+      const added = t.permissions.filter((p) => !current.includes(p));
+      if (added.length) {
+        db.prepare('UPDATE roles SET permissions = ? WHERE id = ?')
+          .run(JSON.stringify([...current, ...added]), exists.id);
+      }
     }
   }
 

@@ -31,6 +31,10 @@ export const PERMISSIONS = {
   'approval.manage': 'Approve or reject requests',
   'automation.manage': 'Configure and run automation rules',
   'admin.platform': 'Platform administration across tenants',
+  'crm.view': 'View leads, contacts and pipeline',
+  'crm.draft': 'Draft CRM records with the assistant',
+  'crm.manage': 'Edit leads and pipeline records directly',
+  'crm.approve': 'Approve or reject assistant-drafted CRM records',
 };
 
 export const ALL_PERMISSIONS = Object.keys(PERMISSIONS);
@@ -51,6 +55,7 @@ export const ROLE_TEMPLATES = [
       'org.view', 'user.view', 'workforce.view', 'workforce.cost.view', 'project.view',
       'allocation.view', 'finance.view', 'analytics.utilization', 'analytics.executive',
       'report.view', 'ai.assistant', 'ai.insights', 'forecast.view', 'audit.view', 'approval.manage',
+      'crm.view', 'crm.draft', 'crm.manage', 'crm.approve',
     ],
   },
   {
@@ -60,7 +65,7 @@ export const ROLE_TEMPLATES = [
     permissions: [
       'org.view', 'workforce.view', 'workforce.cost.view', 'project.view', 'allocation.view',
       'finance.view', 'analytics.utilization', 'report.view', 'ai.assistant', 'ai.insights',
-      'forecast.view', 'import.manage',
+      'forecast.view', 'import.manage', 'crm.view', 'crm.draft',
     ],
   },
   {
@@ -71,6 +76,7 @@ export const ROLE_TEMPLATES = [
       'org.view', 'user.view', 'workforce.view', 'workforce.manage', 'project.view', 'project.manage',
       'allocation.view', 'allocation.manage', 'analytics.utilization', 'report.view',
       'ai.assistant', 'ai.insights', 'forecast.view', 'import.manage',
+      'crm.view', 'crm.draft', 'crm.manage', 'crm.approve',
     ],
   },
   {
@@ -80,6 +86,7 @@ export const ROLE_TEMPLATES = [
     permissions: [
       'org.view', 'workforce.view', 'project.view', 'project.manage', 'allocation.view',
       'allocation.manage', 'analytics.utilization', 'report.view', 'ai.assistant', 'ai.insights',
+      'crm.view', 'crm.draft',
     ],
   },
   {
@@ -88,14 +95,14 @@ export const ROLE_TEMPLATES = [
     description: 'Detailed analysis across permitted data scopes.',
     permissions: [
       'org.view', 'workforce.view', 'project.view', 'allocation.view', 'analytics.utilization',
-      'report.view', 'ai.assistant', 'ai.insights', 'forecast.view', 'import.manage',
+      'report.view', 'ai.assistant', 'ai.insights', 'forecast.view', 'import.manage', 'crm.view',
     ],
   },
   {
     code: 'viewer',
     name: 'Read-only User',
     description: 'View dashboards and reports, no changes.',
-    permissions: ['org.view', 'workforce.view', 'project.view', 'allocation.view', 'analytics.utilization', 'report.view'],
+    permissions: ['org.view', 'workforce.view', 'project.view', 'allocation.view', 'analytics.utilization', 'report.view', 'crm.view'],
   },
 ];
 

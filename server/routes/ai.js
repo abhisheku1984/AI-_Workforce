@@ -9,6 +9,7 @@ import { generateForecast, listForecasts } from '../services/forecasting.js';
 import { resolvePeriod } from '../lib/capacity.js';
 import { audit } from '../lib/audit.js';
 import { buildFactPack, scanForInjection } from '../services/grounding.js';
+import { askAnything, coverage } from '../services/askAnything.js';
 import { aiConfigured, config } from '../config.js';
 import { applyAction, listActions, stageAction } from '../services/assistantActions.js';
 
@@ -16,13 +17,52 @@ const router = express.Router();
 router.use(requireAuth, tenantContext, requireOrg);
 
 /* ------------------------------------------------------------------ assistant */
+/**
+ * Ask the assistant anything.
+ *
+ * Order of preference:
+ *   1. The specific intent engine (capacity, allocation, cost, forecast …) because it produces
+ *      the richest answer with evidence and assumptions.
+ *   2. The general engine, which answers from whatever table the question refers to.
+ *   3. Neither: the intent engine's refusal is returned, but with the general engine's
+ *      suggestions attached, so the user is never left at a dead end.
+ */
 router.post('/assistant/ask', requirePermission('ai.assistant'), ah(async (req, res) => {
   const { question, period, filters = {}, conversationId = null } = req.body || {};
   if (!question || String(question).trim().length < 3) throw new ApiError(400, 'VALIDATION_FAILED', 'Please type a question.');
   const resolved = period ? resolvePeriod(period) : resolvePeriod({ month: new Date().toISOString().slice(0, 7) });
+
   const result = await answerQuestion(req.user, { question, period: resolved, filters, conversationId });
-  return ok(res, result);
+  if (result.intent !== 'unknown' && !result.refused) return ok(res, result);
+
+  // Fall through to the general engine.
+  const general = askAnything(req.user, question);
+  if (!general.refused) {
+    return ok(res, {
+      ...result,
+      answer: general.answer,
+      intent: general.subject ? `general:${general.subject}` : 'general',
+      evidence: general.evidence,
+      confidence: general.confidence,
+      limitations: general.limitations || result.limitations,
+      assumptions: [],
+      sources: [general.subjectLabel || 'Record counts from this organisation’s data'],
+      nextStep: null,
+      engine: 'general',
+    });
+  }
+
+  return ok(res, {
+    ...result,
+    answer: general.answer || result.answer,
+    suggestions: general.suggestions || [],
+    engine: 'refused',
+  });
 }));
+
+/** Everything this assistant can see, so "what is in the database?" has a real answer. */
+router.get('/assistant/coverage', requirePermission('ai.assistant'), ah(async (req, res) =>
+  ok(res, coverage(req.user))));
 
 router.get('/assistant/suggestions', requirePermission('ai.assistant'), ah(async (_req, res) => ok(res, {
   suggestions: [

@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { config } from './config.js';
 import { migrate, getDb } from './db/index.js';
 import { authenticate } from './auth/middleware.js';
-import { ensureModuleCatalogue } from './services/onboarding.js';
+import { ensureModuleCatalogue, refreshSystemRoles } from './services/onboarding.js';
 import { sendError } from './lib/http.js';
 
 import authRoutes from './routes/auth.js';
@@ -20,9 +20,12 @@ import analyticsRoutes from './routes/analytics.js';
 import aiRoutes from './routes/ai.js';
 import reportRoutes from './routes/reports.js';
 import governanceRoutes from './routes/governance.js';
+import crmRoutes from './routes/crm.js';
 
 migrate();
 ensureModuleCatalogue();
+// New permissions must reach existing organisations on restart, not only on fresh installs.
+refreshSystemRoles();
 
 const app = express();
 app.disable('x-powered-by');
@@ -135,6 +138,7 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/governance', governanceRoutes);
+app.use('/api/crm', crmRoutes);
 
 app.use('/api', (_req, res) => sendError(res, 404, 'NOT_FOUND', 'That API endpoint does not exist.'));
 
