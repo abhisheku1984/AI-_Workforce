@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-11-10T13:51:38.975Z",
+  "generated_at": "2026-11-10T14:10:47.285Z",
   "node_version": "v22.22.3",
   "platform": "linux x64",
   "ai_provider": "local",
   "database": "sqlite (temporary per-run file)",
   "totals": {
-    "test_cases_passed": 109,
+    "test_cases_passed": 133,
     "test_cases_failed": 0,
     "assertion_groups": 108,
     "assertion_groups_failed": 0
@@ -15,42 +15,49 @@
       "file": "01-auth.test.js",
       "pass": 10,
       "fail": 0,
-      "durationMs": 1569,
+      "durationMs": 1519,
       "exitCode": 0
     },
     {
       "file": "02-tenancy.test.js",
       "pass": 12,
       "fail": 0,
-      "durationMs": 1168,
+      "durationMs": 1232,
       "exitCode": 0
     },
     {
       "file": "03-analytics.test.js",
       "pass": 14,
       "fail": 0,
-      "durationMs": 837,
+      "durationMs": 827,
       "exitCode": 0
     },
     {
       "file": "04-ingestion.test.js",
       "pass": 17,
       "fail": 0,
-      "durationMs": 875,
+      "durationMs": 864,
       "exitCode": 0
     },
     {
       "file": "05-ai.test.js",
       "pass": 17,
       "fail": 0,
-      "durationMs": 1012,
+      "durationMs": 1069,
       "exitCode": 0
     },
     {
       "file": "06-governance.test.js",
       "pass": 39,
       "fail": 0,
-      "durationMs": 2472,
+      "durationMs": 2576,
+      "exitCode": 0
+    },
+    {
+      "file": "07-voice.test.js",
+      "pass": 24,
+      "fail": 0,
+      "durationMs": 109,
       "exitCode": 0
     }
   ],
@@ -61,7 +68,7 @@
       "name": "Valid sign-in creates session and returns principal",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:31.724Z"
+      "at": "2026-11-10T14:10:39.751Z"
     },
     {
       "file": "01-auth.test.js",
@@ -69,7 +76,7 @@
       "name": "Wrong password rejected",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:31.770Z"
+      "at": "2026-11-10T14:10:39.788Z"
     },
     {
       "file": "01-auth.test.js",
@@ -77,7 +84,7 @@
       "name": "Unknown email returns identical error (no enumeration)",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:31.812Z"
+      "at": "2026-11-10T14:10:39.823Z"
     },
     {
       "file": "01-auth.test.js",
@@ -85,7 +92,7 @@
       "name": "Unauthenticated API access refused on all protected routes",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:31.821Z"
+      "at": "2026-11-10T14:10:39.833Z"
     },
     {
       "file": "01-auth.test.js",
@@ -93,7 +100,7 @@
       "name": "Session cookie is HttpOnly and SameSite=Lax",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:31.865Z"
+      "at": "2026-11-10T14:10:39.870Z"
     },
     {
       "file": "01-auth.test.js",
@@ -101,7 +108,7 @@
       "name": "Logout revokes the session server-side (cookie reuse fails)",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:31.912Z"
+      "at": "2026-11-10T14:10:39.915Z"
     },
     {
       "file": "01-auth.test.js",
@@ -109,7 +116,7 @@
       "name": "Account locked after 6 failed attempts",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:32.194Z"
+      "at": "2026-11-10T14:10:40.194Z"
     },
     {
       "file": "01-auth.test.js",
@@ -117,7 +124,7 @@
       "name": "Weak new password rejected by policy",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:32.284Z"
+      "at": "2026-11-10T14:10:40.277Z"
     },
     {
       "file": "01-auth.test.js",
@@ -125,7 +132,7 @@
       "name": "Password change revokes other sessions",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:32.583Z"
+      "at": "2026-11-10T14:10:40.578Z"
     },
     {
       "file": "02-tenancy.test.js",
@@ -133,7 +140,7 @@
       "name": "Cross-tenant employee read returns 404 (existence not disclosed)",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:33.236Z"
+      "at": "2026-11-10T14:10:41.313Z"
     },
     {
       "file": "02-tenancy.test.js",
@@ -141,7 +148,7 @@
       "name": "Employee lists are strictly per-org",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:33.329Z"
+      "at": "2026-11-10T14:10:41.411Z"
     },
     {
       "file": "02-tenancy.test.js",
@@ -149,7 +156,7 @@
       "name": "Foreign department id rejected when creating an employee",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:33.374Z"
+      "at": "2026-11-10T14:10:41.458Z"
     },
     {
       "file": "02-tenancy.test.js",
@@ -157,7 +164,7 @@
       "name": "Org-context header ignored for non-platform users",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:33.426Z"
+      "at": "2026-11-10T14:10:41.510Z"
     },
     {
       "file": "02-tenancy.test.js",
@@ -165,7 +172,7 @@
       "name": "Department-scoped user only sees their department",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:33.471Z"
+      "at": "2026-11-10T14:10:41.556Z"
     },
     {
       "file": "02-tenancy.test.js",
@@ -173,7 +180,7 @@
       "name": "Scoped analytics exclude out-of-scope employees before calculation",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:33.515Z"
+      "at": "2026-11-10T14:10:41.595Z"
     },
     {
       "file": "02-tenancy.test.js",
@@ -181,7 +188,7 @@
       "name": "Cost fields removed server-side for viewer role",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:33.558Z"
+      "at": "2026-11-10T14:10:41.635Z"
     },
     {
       "file": "02-tenancy.test.js",
@@ -189,7 +196,7 @@
       "name": "Viewer role blocked from all writes (403 on each)",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:33.607Z"
+      "at": "2026-11-10T14:10:41.678Z"
     },
     {
       "file": "02-tenancy.test.js",
@@ -197,7 +204,7 @@
       "name": "Financial analytics denied to viewer",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:33.645Z"
+      "at": "2026-11-10T14:10:41.715Z"
     },
     {
       "file": "02-tenancy.test.js",
@@ -205,7 +212,7 @@
       "name": "Self role escalation blocked",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:33.701Z"
+      "at": "2026-11-10T14:10:41.760Z"
     },
     {
       "file": "02-tenancy.test.js",
@@ -213,7 +220,7 @@
       "name": "User cannot approve their own request",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:33.750Z"
+      "at": "2026-11-10T14:10:41.812Z"
     },
     {
       "file": "03-analytics.test.js",
@@ -221,7 +228,7 @@
       "name": "Available hours = weekly hours ÷ 5 × working days (FTE applied once)",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:34.445Z"
+      "at": "2026-11-10T14:10:42.513Z"
     },
     {
       "file": "03-analytics.test.js",
@@ -229,7 +236,7 @@
       "name": "Employee who exited before the period is excluded",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:34.459Z"
+      "at": "2026-11-10T14:10:42.520Z"
     },
     {
       "file": "03-analytics.test.js",
@@ -237,7 +244,7 @@
       "name": "Allocated hours aggregate overlapping allocations",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:34.483Z"
+      "at": "2026-11-10T14:10:42.528Z"
     },
     {
       "file": "03-analytics.test.js",
@@ -245,7 +252,7 @@
       "name": "Utilization is null rather than 0 when no timesheet data exists",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:34.490Z"
+      "at": "2026-11-10T14:10:42.535Z"
     },
     {
       "file": "03-analytics.test.js",
@@ -253,7 +260,7 @@
       "name": "Unallocated and over-allocated hours reconcile per person",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:34.500Z"
+      "at": "2026-11-10T14:10:42.549Z"
     },
     {
       "file": "03-analytics.test.js",
@@ -261,7 +268,7 @@
       "name": "Totals reconcile with the sum of employee rows",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:34.500Z"
+      "at": "2026-11-10T14:10:42.549Z"
     },
     {
       "file": "03-analytics.test.js",
@@ -269,7 +276,7 @@
       "name": "Department filter restricts the dataset",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:34.505Z"
+      "at": "2026-11-10T14:10:42.556Z"
     },
     {
       "file": "03-analytics.test.js",
@@ -277,7 +284,7 @@
       "name": "A period with no timesheets reports zero recorded hours and null utilization",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:34.510Z"
+      "at": "2026-11-10T14:10:42.561Z"
     },
     {
       "file": "03-analytics.test.js",
@@ -285,7 +292,7 @@
       "name": "Utilization trend returns one point per month with months missing data flagged",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:34.518Z"
+      "at": "2026-11-10T14:10:42.568Z"
     },
     {
       "file": "03-analytics.test.js",
@@ -293,7 +300,7 @@
       "name": "Demand coverage compares required hours with allocated hours",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:34.523Z"
+      "at": "2026-11-10T14:10:42.574Z"
     },
     {
       "file": "03-analytics.test.js",
@@ -301,7 +308,7 @@
       "name": "Overlapping allocations above capacity detected",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:34.527Z"
+      "at": "2026-11-10T14:10:42.578Z"
     },
     {
       "file": "03-analytics.test.js",
@@ -309,7 +316,7 @@
       "name": "Financial totals computed from documented inputs",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:34.534Z"
+      "at": "2026-11-10T14:10:42.585Z"
     },
     {
       "file": "03-analytics.test.js",
@@ -317,7 +324,7 @@
       "name": "Margin only reported when invoice, cost and expense inputs all exist",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:34.534Z"
+      "at": "2026-11-10T14:10:42.585Z"
     },
     {
       "file": "03-analytics.test.js",
@@ -325,7 +332,7 @@
       "name": "Margin is null with explanatory notes when inputs are missing",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:34.580Z"
+      "at": "2026-11-10T14:10:42.632Z"
     },
     {
       "file": "03-analytics.test.js",
@@ -333,7 +340,7 @@
       "name": "Metric definitions endpoint exposes formulas",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:34.585Z"
+      "at": "2026-11-10T14:10:42.637Z"
     },
     {
       "file": "04-ingestion.test.js",
@@ -341,7 +348,7 @@
       "name": "Header aliases map to the correct target fields",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:35.251Z"
+      "at": "2026-11-10T14:10:43.274Z"
     },
     {
       "file": "04-ingestion.test.js",
@@ -349,7 +356,7 @@
       "name": "Numbers, dates and months normalise safely; impossible dates rejected",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:35.253Z"
+      "at": "2026-11-10T14:10:43.276Z"
     },
     {
       "file": "04-ingestion.test.js",
@@ -357,7 +364,7 @@
       "name": "Required fields and formatting are validated with fixes recorded",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:35.254Z"
+      "at": "2026-11-10T14:10:43.277Z"
     },
     {
       "file": "04-ingestion.test.js",
@@ -365,7 +372,7 @@
       "name": "Valid CSV upload → map → validate → commit creates records",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:35.323Z"
+      "at": "2026-11-10T14:10:43.343Z"
     },
     {
       "file": "04-ingestion.test.js",
@@ -373,7 +380,7 @@
       "name": "Formatting issues fixed automatically and recorded",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:35.323Z"
+      "at": "2026-11-10T14:10:43.343Z"
     },
     {
       "file": "04-ingestion.test.js",
@@ -381,7 +388,7 @@
       "name": "Invalid rows are reported and skipped; no values invented",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:35.357Z"
+      "at": "2026-11-10T14:10:43.377Z"
     },
     {
       "file": "04-ingestion.test.js",
@@ -389,7 +396,7 @@
       "name": "Duplicate rows within a file detected and skipped",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:35.379Z"
+      "at": "2026-11-10T14:10:43.401Z"
     },
     {
       "file": "04-ingestion.test.js",
@@ -397,7 +404,7 @@
       "name": "Re-upload updates the existing record instead of duplicating it",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:35.399Z"
+      "at": "2026-11-10T14:10:43.425Z"
     },
     {
       "file": "04-ingestion.test.js",
@@ -405,7 +412,7 @@
       "name": "Record version history written on update",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:35.399Z"
+      "at": "2026-11-10T14:10:43.425Z"
     },
     {
       "file": "04-ingestion.test.js",
@@ -413,7 +420,7 @@
       "name": "Unsupported file type rejected before parsing",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:35.404Z"
+      "at": "2026-11-10T14:10:43.431Z"
     },
     {
       "file": "04-ingestion.test.js",
@@ -421,7 +428,7 @@
       "name": "File content signature validated, not just the extension",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:35.410Z"
+      "at": "2026-11-10T14:10:43.438Z"
     },
     {
       "file": "04-ingestion.test.js",
@@ -429,7 +436,7 @@
       "name": "Empty upload rejected with an understandable error",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:35.415Z"
+      "at": "2026-11-10T14:10:43.444Z"
     },
     {
       "file": "04-ingestion.test.js",
@@ -437,7 +444,7 @@
       "name": "Mapping without required fields is refused with the field name",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:35.423Z"
+      "at": "2026-11-10T14:10:43.454Z"
     },
     {
       "file": "04-ingestion.test.js",
@@ -445,7 +452,7 @@
       "name": "Commit refused before validation",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:35.431Z"
+      "at": "2026-11-10T14:10:43.462Z"
     },
     {
       "file": "04-ingestion.test.js",
@@ -453,7 +460,7 @@
       "name": "Rejected import does not change existing data",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:35.451Z"
+      "at": "2026-11-10T14:10:43.484Z"
     },
     {
       "file": "04-ingestion.test.js",
@@ -461,7 +468,7 @@
       "name": "Identical file re-upload detected by checksum",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:35.459Z"
+      "at": "2026-11-10T14:10:43.494Z"
     },
     {
       "file": "04-ingestion.test.js",
@@ -469,7 +476,7 @@
       "name": "CSV formula injection neutralised in exported files",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:35.460Z"
+      "at": "2026-11-10T14:10:43.495Z"
     },
     {
       "file": "04-ingestion.test.js",
@@ -477,7 +484,7 @@
       "name": "Import history and downloadable error report available",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:35.466Z"
+      "at": "2026-11-10T14:10:43.503Z"
     },
     {
       "file": "05-ai.test.js",
@@ -485,7 +492,7 @@
       "name": "Answer returned with evidence, period and confidence",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:36.160Z"
+      "at": "2026-11-10T14:10:44.239Z"
     },
     {
       "file": "05-ai.test.js",
@@ -493,7 +500,7 @@
       "name": "Assistant figures reconcile with the analytics API",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:36.183Z"
+      "at": "2026-11-10T14:10:44.269Z"
     },
     {
       "file": "05-ai.test.js",
@@ -501,7 +508,7 @@
       "name": "Unsupported question returns an explicit refusal",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:36.194Z"
+      "at": "2026-11-10T14:10:44.282Z"
     },
     {
       "file": "05-ai.test.js",
@@ -509,7 +516,7 @@
       "name": "Prompt injection in a question is blocked, returned no data and was logged",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:36.199Z"
+      "at": "2026-11-10T14:10:44.287Z"
     },
     {
       "file": "05-ai.test.js",
@@ -517,7 +524,7 @@
       "name": "Injection patterns detected in arbitrary text without false positive on a normal question",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:36.199Z"
+      "at": "2026-11-10T14:10:44.288Z"
     },
     {
       "file": "05-ai.test.js",
@@ -525,7 +532,7 @@
       "name": "Assistant endpoint requires the ai.assistant permission",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:36.243Z"
+      "at": "2026-11-10T14:10:44.336Z"
     },
     {
       "file": "05-ai.test.js",
@@ -533,7 +540,7 @@
       "name": "Assistant refuses cost/revenue questions without permission",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:36.294Z"
+      "at": "2026-11-10T14:10:44.393Z"
     },
     {
       "file": "05-ai.test.js",
@@ -541,7 +548,7 @@
       "name": "Fact pack excludes financial data for unauthorised users",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:36.342Z"
+      "at": "2026-11-10T14:10:44.444Z"
     },
     {
       "file": "05-ai.test.js",
@@ -549,7 +556,7 @@
       "name": "Fact pack is limited to the requesting tenant",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:36.351Z"
+      "at": "2026-11-10T14:10:44.454Z"
     },
     {
       "file": "05-ai.test.js",
@@ -557,7 +564,7 @@
       "name": "Default deployment makes no outbound AI calls",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:36.360Z"
+      "at": "2026-11-10T14:10:44.464Z"
     },
     {
       "file": "05-ai.test.js",
@@ -565,7 +572,7 @@
       "name": "Employee names can be redacted from the payload sent to a model",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:36.371Z"
+      "at": "2026-11-10T14:10:44.475Z"
     },
     {
       "file": "05-ai.test.js",
@@ -573,7 +580,7 @@
       "name": "Numbers not present in the authorised facts are detected",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:36.372Z"
+      "at": "2026-11-10T14:10:44.476Z"
     },
     {
       "file": "05-ai.test.js",
@@ -581,7 +588,7 @@
       "name": "Insights carry finding, evidence, assumptions, limitations, risks and next step",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:36.387Z"
+      "at": "2026-11-10T14:10:44.493Z"
     },
     {
       "file": "05-ai.test.js",
@@ -589,7 +596,7 @@
       "name": "Insight review recorded with reviewer and audit event",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:36.397Z"
+      "at": "2026-11-10T14:10:44.504Z"
     },
     {
       "file": "05-ai.test.js",
@@ -597,7 +604,7 @@
       "name": "Forecast refused when history is insufficient, with the reason stated",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:36.461Z"
+      "at": "2026-11-10T14:10:44.562Z"
     },
     {
       "file": "05-ai.test.js",
@@ -605,7 +612,7 @@
       "name": "Forecast produced with method, R², ranges and limitations",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:36.473Z"
+      "at": "2026-11-10T14:10:44.572Z"
     },
     {
       "file": "05-ai.test.js",
@@ -613,7 +620,7 @@
       "name": "Forecast points are labelled separately from actuals",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:36.473Z"
+      "at": "2026-11-10T14:10:44.572Z"
     },
     {
       "file": "06-governance.test.js",
@@ -621,7 +628,7 @@
       "name": "Action requiring approval does not execute; approval request created",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.201Z"
+      "at": "2026-11-10T14:10:45.312Z"
     },
     {
       "file": "06-governance.test.js",
@@ -629,7 +636,7 @@
       "name": "Approved automation executes and the result is recorded",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.316Z"
+      "at": "2026-11-10T14:10:45.435Z"
     },
     {
       "file": "06-governance.test.js",
@@ -637,7 +644,7 @@
       "name": "Every run records initiator, approval, result and timestamp",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.317Z"
+      "at": "2026-11-10T14:10:45.435Z"
     },
     {
       "file": "06-governance.test.js",
@@ -645,7 +652,7 @@
       "name": "Disabled automation cannot be triggered",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.323Z"
+      "at": "2026-11-10T14:10:45.442Z"
     },
     {
       "file": "06-governance.test.js",
@@ -653,7 +660,7 @@
       "name": "Closed allow-list rejects unsupported action types",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.326Z"
+      "at": "2026-11-10T14:10:45.446Z"
     },
     {
       "file": "06-governance.test.js",
@@ -661,7 +668,7 @@
       "name": "CSV report includes period, generator and lineage header",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.336Z"
+      "at": "2026-11-10T14:10:45.459Z"
     },
     {
       "file": "06-governance.test.js",
@@ -669,7 +676,7 @@
       "name": "Excel export produces a valid xlsx (zip signature)",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.363Z"
+      "at": "2026-11-10T14:10:45.479Z"
     },
     {
       "file": "06-governance.test.js",
@@ -677,7 +684,7 @@
       "name": "Cost report blocked for roles without finance permission",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.409Z"
+      "at": "2026-11-10T14:10:45.523Z"
     },
     {
       "file": "06-governance.test.js",
@@ -685,7 +692,7 @@
       "name": "Another tenant's report file cannot be downloaded",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.455Z"
+      "at": "2026-11-10T14:10:45.572Z"
     },
     {
       "file": "06-governance.test.js",
@@ -693,7 +700,7 @@
       "name": "Path traversal attempt on report download rejected",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.460Z"
+      "at": "2026-11-10T14:10:45.575Z"
     },
     {
       "file": "06-governance.test.js",
@@ -701,7 +708,7 @@
       "name": "Audit trail captures authentication, approvals, automation and report generation",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.464Z"
+      "at": "2026-11-10T14:10:45.581Z"
     },
     {
       "file": "06-governance.test.js",
@@ -709,7 +716,7 @@
       "name": "Audit trail restricted to authorised roles",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.506Z"
+      "at": "2026-11-10T14:10:45.627Z"
     },
     {
       "file": "06-governance.test.js",
@@ -717,7 +724,7 @@
       "name": "Tenant export excludes other tenants and password hashes",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.512Z"
+      "at": "2026-11-10T14:10:45.635Z"
     },
     {
       "file": "06-governance.test.js",
@@ -725,7 +732,7 @@
       "name": "Data portability export available to administrators",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.512Z"
+      "at": "2026-11-10T14:10:45.635Z"
     },
     {
       "file": "06-governance.test.js",
@@ -733,7 +740,7 @@
       "name": "Deletion cannot be self-approved",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.518Z"
+      "at": "2026-11-10T14:10:45.642Z"
     },
     {
       "file": "06-governance.test.js",
@@ -741,7 +748,7 @@
       "name": "Health endpoint reports database connectivity",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.521Z"
+      "at": "2026-11-10T14:10:45.645Z"
     },
     {
       "file": "06-governance.test.js",
@@ -749,7 +756,7 @@
       "name": "Unknown API route returns structured error",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.523Z"
+      "at": "2026-11-10T14:10:45.648Z"
     },
     {
       "file": "06-governance.test.js",
@@ -757,7 +764,7 @@
       "name": "Error responses contain no stack traces or internal paths",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.565Z"
+      "at": "2026-11-10T14:10:45.693Z"
     },
     {
       "file": "06-governance.test.js",
@@ -765,7 +772,7 @@
       "name": "Helmet security headers applied; framework banner hidden",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.567Z"
+      "at": "2026-11-10T14:10:45.695Z"
     },
     {
       "file": "06-governance.test.js",
@@ -773,7 +780,7 @@
       "name": "Cross-origin state-changing request rejected",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.569Z"
+      "at": "2026-11-10T14:10:45.697Z"
     },
     {
       "file": "06-governance.test.js",
@@ -781,7 +788,7 @@
       "name": "Foreign origin still rejected after proxy-safe comparison",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.573Z"
+      "at": "2026-11-10T14:10:45.702Z"
     },
     {
       "file": "06-governance.test.js",
@@ -789,7 +796,7 @@
       "name": "Sign-in works behind a reverse proxy or preview tunnel",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.650Z"
+      "at": "2026-11-10T14:10:45.788Z"
     },
     {
       "file": "06-governance.test.js",
@@ -797,7 +804,7 @@
       "name": "Frame embedding follows configuration, not a fixed header",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.653Z"
+      "at": "2026-11-10T14:10:45.793Z"
     },
     {
       "file": "06-governance.test.js",
@@ -805,7 +812,7 @@
       "name": "Missing or unrecognised session is explained to the user",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.657Z"
+      "at": "2026-11-10T14:10:45.797Z"
     },
     {
       "file": "06-governance.test.js",
@@ -813,7 +820,7 @@
       "name": "Session cookie flags match the transport in use",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.733Z"
+      "at": "2026-11-10T14:10:45.883Z"
     },
     {
       "file": "06-governance.test.js",
@@ -821,7 +828,7 @@
       "name": "Session works without cookies via a bearer token",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.787Z"
+      "at": "2026-11-10T14:10:45.948Z"
     },
     {
       "file": "06-governance.test.js",
@@ -829,7 +836,7 @@
       "name": "Sign-out revokes the token as well as the cookie",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.829Z"
+      "at": "2026-11-10T14:10:45.994Z"
     },
     {
       "file": "06-governance.test.js",
@@ -837,7 +844,7 @@
       "name": "Entry document is served no-store with a build stamp",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.832Z"
+      "at": "2026-11-10T14:10:45.998Z"
     },
     {
       "file": "06-governance.test.js",
@@ -845,7 +852,7 @@
       "name": "No hardcoded credentials or API keys in server source",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.833Z"
+      "at": "2026-11-10T14:10:45.998Z"
     },
     {
       "file": "06-governance.test.js",
@@ -853,7 +860,7 @@
       "name": "Dashboard returns KPI totals, trend, definitions and freshness",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.843Z"
+      "at": "2026-11-10T14:10:46.009Z"
     },
     {
       "file": "06-governance.test.js",
@@ -861,7 +868,7 @@
       "name": "Structure endpoints validate input ranges",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.849Z"
+      "at": "2026-11-10T14:10:46.014Z"
     },
     {
       "file": "06-governance.test.js",
@@ -869,7 +876,7 @@
       "name": "Removing a permission from a role is enforced on the next request",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:37.899Z"
+      "at": "2026-11-10T14:10:46.067Z"
     },
     {
       "file": "06-governance.test.js",
@@ -877,7 +884,7 @@
       "name": "A direct run announces a listening URL on any platform",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:38.209Z"
+      "at": "2026-11-10T14:10:46.412Z"
     },
     {
       "file": "06-governance.test.js",
@@ -885,7 +892,7 @@
       "name": "Importing the app module does not start a listener",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:38.538Z"
+      "at": "2026-11-10T14:10:46.732Z"
     },
     {
       "file": "06-governance.test.js",
@@ -893,7 +900,7 @@
       "name": "A prebuilt interface can be installed when the bundler is blocked",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:38.572Z"
+      "at": "2026-11-10T14:10:46.772Z"
     },
     {
       "file": "06-governance.test.js",
@@ -901,7 +908,7 @@
       "name": "The committed interface snapshot is not excluded by .gitignore",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:38.579Z"
+      "at": "2026-11-10T14:10:46.779Z"
     },
     {
       "file": "06-governance.test.js",
@@ -909,7 +916,7 @@
       "name": "Local build output and secrets remain ignored",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:38.595Z"
+      "at": "2026-11-10T14:10:46.796Z"
     },
     {
       "file": "06-governance.test.js",
@@ -917,7 +924,7 @@
       "name": "Without dist/, the landing page explains the fix and the API stays healthy",
       "passed": true,
       "detail": "",
-      "at": "2026-11-10T13:51:38.923Z"
+      "at": "2026-11-10T14:10:47.128Z"
     }
   ]
 }

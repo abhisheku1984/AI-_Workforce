@@ -3,7 +3,10 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { titleCase } from '../lib/format';
 
-function Icon({ name, className = 'w-4.5 h-4.5' }) {
+// Size explicitly. 'w-4.5 h-4.5' is not a Tailwind v3 spacing value, so it compiled to no
+// rule at all; an <svg> with no width/height falls back to its 300x150 default and swallowed
+// the sidebar. Fixed pixel dimensions cannot silently disappear.
+function Icon({ name, className = '' }) {
   const paths = {
     dashboard: 'M3 3h7v7H3V3Zm11 0h7v4h-7V3ZM3 14h7v7H3v-7Zm11-3h7v10h-7V11Z',
     workforce: 'M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0Zm-4 6c-3.3 0-8 1.7-8 5v1h16v-1c0-3.3-4.7-5-8-5Z',
@@ -19,7 +22,18 @@ function Icon({ name, className = 'w-4.5 h-4.5' }) {
     scenario: 'M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm13 0v6m-3-3h6',
   };
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg
+      width="18"
+      height="18"
+      className={`shrink-0 ${className}`.trim()}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
       <path d={paths[name] || paths.dashboard} />
     </svg>
   );
@@ -47,6 +61,15 @@ export function Layout({ children }) {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenu, setUserMenu] = useState(false);
+  // Collapsed rail: icons only, remembered between visits. The sidebar occupies real layout
+  // space on desktop, so on a laptop it competes with the data — let people reclaim it.
+  const [collapsed, setCollapsed] = useState(() => {
+    try { return localStorage.getItem('wiq.sidebar.collapsed') === '1'; } catch { return false; }
+  });
+
+  useEffect(() => {
+    try { localStorage.setItem('wiq.sidebar.collapsed', collapsed ? '1' : '0'); } catch { /* private mode */ }
+  }, [collapsed]);
 
   useEffect(() => { setMobileOpen(false); setUserMenu(false); }, [location.pathname]);
 
@@ -54,17 +77,21 @@ export function Layout({ children }) {
   const visibleNav = NAV.filter((n) => can(n.perm));
 
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[248px_1fr]">
+    <div className={`min-h-screen lg:grid ${collapsed ? 'lg:grid-cols-[68px_1fr]' : 'lg:grid-cols-[248px_1fr]'}`}>
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:rounded focus:bg-white focus:px-3 focus:py-2 focus:text-sm">Skip to content</a>
 
       {/* sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-40 w-[248px] bg-ink-900 text-white flex flex-col transition-transform lg:static lg:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="px-4 h-14 flex items-center gap-2.5 border-b border-white/10">
-          <div className="w-8 h-8 rounded-lg bg-brand-600 grid place-items-center font-bold text-sm">W</div>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold leading-tight">WorkforceIQ</p>
-            <p className="text-[11px] text-ink-400 truncate">Operations intelligence</p>
-          </div>
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 bg-ink-900 text-white flex flex-col transition-[width,transform] duration-200 lg:static lg:translate-x-0 ${collapsed ? 'w-[68px]' : 'w-[248px]'} ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
+      >
+        <div className={`h-14 flex items-center border-b border-white/10 ${collapsed ? 'justify-center px-2' : 'px-4 gap-2.5'}`}>
+          <div className="w-8 h-8 shrink-0 rounded-lg bg-brand-600 grid place-items-center font-bold text-sm">W</div>
+          {!collapsed && (
+            <div className="min-w-0">
+              <p className="text-sm font-semibold leading-tight">WorkforceIQ</p>
+              <p className="text-[11px] text-ink-400 truncate">Operations intelligence</p>
+            </div>
+          )}
         </div>
         <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-0.5" aria-label="Main navigation">
           {visibleNav.map((n) => (
@@ -72,17 +99,37 @@ export function Layout({ children }) {
               key={n.to}
               to={n.to}
               end={n.end}
-              className={({ isActive }) => `nav-link ${isActive ? 'nav-link-active' : ''}`}
+              title={collapsed ? n.label : undefined}
+              aria-label={collapsed ? n.label : undefined}
+              className={({ isActive }) => `nav-link ${isActive ? 'nav-link-active' : ''} ${collapsed ? 'justify-center px-0' : ''}`}
             >
               <Icon name={n.icon} />
-              <span className="truncate">{n.label}</span>
+              {!collapsed && <span className="truncate">{n.label}</span>}
             </NavLink>
           ))}
         </nav>
-        <div className="px-3 py-3 border-t border-white/10 text-[11px] text-ink-400 space-y-1">
-          <p className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-positive-500" /> Demo environment</p>
-          <p>Fictional demonstration data</p>
+        {/* Desktop collapse control. Hidden on mobile, where the drawer overlays instead. */}
+        <div className="hidden lg:block border-t border-white/10 p-2">
+          <button
+            type="button"
+            onClick={() => setCollapsed((v) => !v)}
+            className={`nav-link w-full text-ink-400 hover:text-white ${collapsed ? 'justify-center px-0' : ''}`}
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-pressed={collapsed}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="shrink-0" aria-hidden>
+              <path d={collapsed ? 'M9 6l6 6-6 6' : 'M15 6l-6 6 6 6'} />
+            </svg>
+            {!collapsed && <span className="truncate">Collapse</span>}
+          </button>
         </div>
+        {!collapsed && (
+          <div className="px-3 pb-3 text-[11px] text-ink-400 space-y-1">
+            <p className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-positive-500" /> Demo environment</p>
+            <p>Fictional demonstration data</p>
+          </div>
+        )}
       </aside>
 
       {mobileOpen && <button type="button" aria-label="Close navigation" className="fixed inset-0 z-30 bg-ink-950/40 lg:hidden" onClick={() => setMobileOpen(false)} />}

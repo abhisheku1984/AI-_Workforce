@@ -240,3 +240,16 @@ The product is designed to be honest at zero data rather than impressive and wro
 4. **Distinguish plan from actual in the label itself**: "Allocated (plan)", "Utilised (timesheets)", "Forecast (estimate)".
 5. **Do not call bench "savings".** It is capacity being paid for and not billed; calling it a saving is a claim the product cannot support.
 6. **Demo data is labelled as demo in the organisation name** — every demonstration tenant is named "… (Demo)" and its records carry `is_demo`.
+
+## Navigation rail
+
+The sidebar occupies real layout width on desktop, so it competes with dense tables and charts.
+It collapses to a 68-pixel icon rail, and the choice is remembered per browser. When collapsed,
+each icon exposes its label as a tooltip and to an accessible name, so the rail is not a guessing
+game for screen-reader or keyboard users. The collapse control is hidden below the `lg` breakpoint,
+where the navigation is an overlay drawer instead and space is not the constraint.
+
+Icon sizes are set as SVG attributes rather than utility classes. A utility class that does not
+exist in the design system compiles to no CSS at all, and an `<svg>` with no width falls back to
+its 300×150 default — which silently consumes the entire sidebar. Attributes cannot go missing
+in the same way.

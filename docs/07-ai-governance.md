@@ -211,3 +211,26 @@ Before any AI capability ships, all of these must be answerable "yes":
 - [ ] Does the interface disclose provider, evidence, assumptions and limitations?
 - [ ] Does it avoid scoring, ranking or predicting anything about an individual?
 - [ ] Is there a test that fails if the guarantee is broken?
+
+## Voice interaction
+
+Voice is a **presentation layer over the same assistant**, not a second assistant. Every
+guarantee above applies unchanged: the answer is computed from permission-filtered data by the
+same deterministic engine, the same audit record is written, the same limitations are attached.
+
+Where voice differs, and why:
+
+| Concern | Decision | Reason |
+| --- | --- | --- |
+| What is spoken | The answer, one limitation, and a confidence statement when confidence is low or data is insufficient. Evidence, assumptions and sources stay on screen. | Reading an evidence block aloud takes minutes, loses the user, and buries the figure they asked for. |
+| When it speaks | Only when the user enables "Read answers aloud", and on an explicit "Read aloud" press per answer. | An assistant that starts talking unprompted is worse than a silent one, especially in a shared office. |
+| Microphone | Opens only on a press. One utterance per press, stopping on silence; the button shows a listening state while open. | Continuous listening with no visible state leaves microphones open by accident. |
+| Speech recognition | Browser engine, not a server call. Unavailable without a secure context (https or localhost). | Keeps the audio out of our infrastructure entirely; the transcript is the only thing that reaches us. |
+| Recognition accuracy | The transcript is shown to the user before it becomes a question; spoken numbers are treated as ordinary question text. | Never act silently on a misheard question. |
+| Data sent to the speech engine | Nothing beyond the spoken text. Same rule as the assistant: aggregates only, no employee names unless the organisation allows them. | Voice must not widen the data surface. |
+
+**Known limitation, stated plainly:** speech *recognition* in Chrome and Edge sends audio to
+that browser's speech service. That is a property of the browser, not of this application, and it
+means "no data leaves this deployment" is true of the answer engine but **not** of the
+microphone. Organisations that cannot accept that should leave voice input unused; typed
+questions and spoken answers remain fully local to the browser.

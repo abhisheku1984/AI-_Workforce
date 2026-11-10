@@ -1,7 +1,7 @@
 {
-  "note": "Snapshot of the built interface, committed so the app can run on machines where the native bundler binary is blocked by policy. Rebuild with npm run build after changing src/.",
-  "entry": "index-DnSBzh7R.js",
-  "builtAt": "2026-11-10T13:44:15.288Z",
-  "appVersion": "1.0.0",
-  "source": "dist/ at the commit that added this file"
+  "note": "Snapshot of the built interface, committed so the app can run on machines where the native bundler binary is blocked by policy. Refresh with npm run refresh-prebuilt after changing src/.",
+  "entry": "index-CRjcNMJt.js",
+  "builtAt": "2026-11-10T14:10:51.930Z",
+  "rebuiltFromCommit": "07c8852",
+  "appVersion": "1.0.0"
 }

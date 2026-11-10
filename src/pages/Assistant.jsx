@@ -3,6 +3,7 @@ import { useApi, useAuth } from '../lib/auth';
 import { PageHeader, Card, Loading, ErrorState, InfoNote, ConfidenceBadge, Badge, EmptyState } from '../components/ui';
 import { api } from '../lib/api';
 import { fmtMonth } from '../lib/format';
+import { useVoice } from '../lib/useVoice';
 
 export default function AssistantPage() {
   const { can } = useAuth();
@@ -14,24 +15,70 @@ export default function AssistantPage() {
   const [error, setError] = useState(null);
   const [conversationId, setConversationId] = useState(null);
   const endRef = useRef(null);
+  // The record of what has been asked. Every question is already stored server-side with its
+  // answer, evidence and confidence; this surfaces it so a manager can revisit a decision.
+  const history = useApi('/api/ai/assistant/conversations');
+
+  // Voice: press to speak the question, hear the answer if the user asked for that.
+  const voice = useVoice({
+    onTranscript: (text) => { ask(text, { spoken: true }); },
+    onError: (message) => setError(message),
+  });
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }); }, [messages, busy]);
 
-  async function ask(text) {
+  async function ask(text, { spoken = false } = {}) {
     const q = String(text || question).trim();
     if (!q || busy) return;
     setError(null);
     setQuestion('');
-    setMessages((m) => [...m, { role: 'user', content: q }]);
+    const askedAt = new Date().toISOString();
+    setMessages((m) => [...m, { role: 'user', content: q, at: askedAt, spoken }]);
     setBusy(true);
     try {
       const res = await api.post('/api/ai/assistant/ask', { question: q, conversationId });
       setConversationId(res.data.conversationId);
       setMessages((m) => [...m, { role: 'assistant', ...res.data }]);
+      history.reload?.();
+      // Speak only when the user has asked for spoken answers. Never surprise them.
+      if (voice.speakAnswers && voice.availability.output) voice.speak(null, { answer: res.data });
     } catch (e) {
       setError(e.message);
       setMessages((m) => [...m, { role: 'error', content: e.message }]);
     } finally { setBusy(false); }
+  }
+
+  async function openConversation(id) {
+    try {
+      setError(null);
+      const res = await api.get(`/api/ai/assistant/conversations/${id}`);
+      setConversationId(id);
+      setMessages(
+        res.data.messages.map((m) => (m.role === 'user'
+          ? { role: 'user', content: m.content, at: m.created_at }
+          : {
+            role: 'assistant',
+            answer: m.content,
+            intent: m.intent,
+            confidence: m.confidence,
+            evidence: m.evidence,
+            assumptions: m.assumptions,
+            limitations: m.limitations,
+            sources: [],
+            period: null,
+            provider: m.provider,
+            latencyMs: null,
+            at: m.created_at,
+          })),
+      );
+    } catch (e) { setError(e.message); }
+  }
+
+  function startNew() {
+    setConversationId(null);
+    setMessages([]);
+    setError(null);
+    voice.stopSpeaking();
   }
 
   return (
@@ -41,6 +88,8 @@ export default function AssistantPage() {
           title="AI business assistant"
           description="Ask plain business questions about your own data. Every answer shows the period, filters, evidence, assumptions and limitations it used — and will say plainly when the data is not sufficient."
         />
+
+        <VoiceBar voice={voice} busy={busy} />
 
         <Card bodyClass="p-0">
           <div className="h-[62vh] min-h-[420px] overflow-y-auto p-4 space-y-4" aria-live="polite">
@@ -64,14 +113,20 @@ export default function AssistantPage() {
               if (m.role === 'user') {
                 return (
                   <div key={idx} className="flex justify-end">
-                    <div className="max-w-[85%] rounded-2xl rounded-br-md bg-brand-600 text-white px-4 py-2.5 text-sm">{m.content}</div>
+                    <div className="max-w-[85%]">
+                      <div className="rounded-2xl rounded-br-md bg-brand-600 text-white px-4 py-2.5 text-sm">{m.content}</div>
+                      <p className="text-[10px] text-ink-400 text-right mt-0.5">
+                        {m.spoken ? 'spoken · ' : ''}
+                        {new Date(m.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
                   </div>
                 );
               }
               if (m.role === 'error') {
                 return <div key={idx} className="max-w-[85%]"><ErrorState message={m.content} /></div>;
               }
-              return <AssistantAnswer key={idx} answer={m} />;
+              return <AssistantAnswer key={idx} answer={m} voice={voice} />;
             })}
 
             {busy && (
@@ -82,16 +137,43 @@ export default function AssistantPage() {
             <div ref={endRef} />
           </div>
 
-          <form onSubmit={(e) => { e.preventDefault(); ask(); }} className="border-t border-ink-200 p-3 flex gap-2">
-            <input
-              className="input"
-              placeholder="Ask about capacity, allocation, staffing gaps, cost or data quality…"
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              aria-label="Your question"
-              maxLength={500}
-            />
-            <button type="submit" className="btn-primary" disabled={busy || !question.trim()}>Ask</button>
+          <form onSubmit={(e) => { e.preventDefault(); ask(); }} className="border-t border-ink-200 p-3">
+            {voice.listening && (
+              <p className="mb-2 text-[12px] text-brand-700 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-danger-500 animate-pulse" />
+                Listening… {voice.interim ? <span className="text-ink-600 italic">“{voice.interim}”</span> : 'speak your question, then pause'}
+              </p>
+            )}
+            <div className="flex gap-2">
+              <input
+                className="input"
+                placeholder={
+                  voice.availability.input
+                    ? 'Ask about capacity, allocation, staffing gaps, cost or data quality — or press the microphone'
+                    : 'Ask about capacity, allocation, staffing gaps, cost or data quality…'
+                }
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                aria-label="Your question"
+                maxLength={500}
+              />
+              {voice.availability.input && (
+                <button
+                  type="button"
+                  onClick={voice.toggleListening}
+                  className={`btn-ghost shrink-0 ${voice.listening ? 'text-danger-700 border-danger-500' : ''}`}
+                  aria-label={voice.listening ? 'Stop listening' : 'Ask by voice'}
+                  aria-pressed={voice.listening}
+                  title={voice.listening ? 'Stop listening' : 'Ask by voice'}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3Z" />
+                    <path d={voice.listening ? 'M6 11a6 6 0 0 0 12 0M9 20h6' : 'M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6'} />
+                  </svg>
+                </button>
+              )}
+              <button type="submit" className="btn-primary" disabled={busy || !question.trim()}>Ask</button>
+            </div>
           </form>
         </Card>
 
@@ -99,6 +181,34 @@ export default function AssistantPage() {
       </div>
 
       <aside className="space-y-4">
+        <Card
+          title="Your recent questions"
+          bodyClass="p-2"
+          actions={<button type="button" className="link text-xs" onClick={startNew}>New</button>}
+        >
+          {history.loading && <p className="px-2 py-1 text-[12px] text-ink-400">Loading…</p>}
+          {!history.loading && !(history.data?.length) && (
+            <p className="px-2 py-1 text-[12px] text-ink-500">Nothing asked yet. Every question you ask is recorded here, with the figures behind the answer.</p>
+          )}
+          <ul className="text-[12px]">
+            {(history.data || []).map((c) => (
+              <li key={c.id}>
+                <button
+                  type="button"
+                  onClick={() => openConversation(c.id)}
+                  className={`w-full text-left rounded-md px-2 py-1.5 hover:bg-ink-100 ${conversationId === c.id ? 'bg-brand-50 text-brand-800' : 'text-ink-700'}`}
+                  title={c.title}
+                >
+                  <span className="block truncate">{c.title}</span>
+                  <span className="block text-[10px] text-ink-400">
+                    {new Date(c.updated_at).toLocaleString([], { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </Card>
+
         <Card title="How this works" bodyClass="p-4 space-y-2 text-[13px] text-ink-600">
           <p><strong>Grounding.</strong> Answers are computed from {governance.data?.external_provider_configured ? 'your authorised data only, and any external model receives aggregates rather than raw records' : 'your authorised data by a deterministic analytics engine — no external model is called'}.</p>
           <p><strong>Permissions.</strong> Cost and financial questions are refused if your role cannot see that data.</p>
@@ -142,7 +252,53 @@ export default function AssistantPage() {
   );
 }
 
-function AssistantAnswer({ answer }) {
+/**
+ * Voice controls, stated plainly. If speech is unavailable the reason is shown, with the
+ * fix, rather than a disabled button with no explanation.
+ */
+function VoiceBar({ voice, busy }) {
+  const { availability, speakAnswers, setSpeakAnswers, speaking, error, clearError } = voice;
+  return (
+    <div className="mb-3 rounded-lg border border-ink-200 bg-white px-3 py-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px]">
+      <span className="font-medium text-ink-700">Voice</span>
+
+      {availability.input ? (
+        <span className="text-ink-500">Press the microphone to ask out loud.</span>
+      ) : (
+        <span className="text-caution-700">
+          {availability.reason === 'insecure'
+            ? 'Microphone needs a secure page — use https or localhost.'
+            : 'This browser has no speech recognition. Chrome and Edge do.'}
+        </span>
+      )}
+
+      <label className={`flex items-center gap-1.5 ${availability.output ? 'cursor-pointer' : 'opacity-50'}`}>
+        <input
+          type="checkbox"
+          checked={speakAnswers}
+          disabled={!availability.output}
+          onChange={(e) => setSpeakAnswers(e.target.checked)}
+          className="accent-brand-600"
+        />
+        Read answers aloud
+      </label>
+
+      {speaking && (
+        <button type="button" className="link" onClick={voice.stopSpeaking}>Stop reading</button>
+      )}
+      {busy && <span className="text-ink-400">working…</span>}
+      {error && (
+        <span className="text-danger-700 flex items-center gap-2">
+          {error}
+          <button type="button" className="link" onClick={clearError}>Dismiss</button>
+        </span>
+      )}
+    </div>
+  );
+}
+
+function AssistantAnswer({ answer, voice }) {
+  const canSpeak = voice?.availability?.output;
   const [showDetail, setShowDetail] = useState(false);
   if (answer.blocked) {
     return (
@@ -202,7 +358,22 @@ function AssistantAnswer({ answer }) {
           </>
         )}
         {answer.modelNote && <p className="text-[11px] text-caution-700 mt-2">{answer.modelNote}</p>}
-        <p className="text-[10px] text-ink-400 mt-2">{answer.latencyMs} ms · {answer.provider}</p>
+        <div className="flex items-center gap-3 mt-2">
+          {canSpeak && (
+            <button
+              type="button"
+              className="link text-xs inline-flex items-center gap-1"
+              onClick={() => (voice.speaking ? voice.stopSpeaking() : voice.speak(null, { answer }))}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+                {voice.speaking ? <path d="M22 9l-6 6M16 9l6 6" /> : <path d="M15.5 8.5a5 5 0 0 1 0 7M18 6a9 9 0 0 1 0 12" />}
+              </svg>
+              {voice.speaking ? 'Stop' : 'Read aloud'}
+            </button>
+          )}
+          <span className="text-[10px] text-ink-400">{answer.latencyMs} ms · {answer.provider}</span>
+        </div>
       </div>
     </div>
   );
